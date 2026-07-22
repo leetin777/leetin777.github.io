@@ -80,24 +80,17 @@
         .btn:active {
             transform: scale(0.95);
         }
+        .btn-zero {
+            grid-column: 1;
+        }
         .btn-delete {
-            grid-column: 1 / 4;
+            grid-column: 2;
             background: #fff3cd;
             border-color: #ffc107;
             font-size: 20px;
         }
         .btn-delete:hover {
             background: #ffe69c;
-        }
-        .btn-check {
-            background: #d4edda;
-            border-color: #28a745;
-            color: #28a745;
-            grid-column: 1 / 4;
-            font-size: 32px;
-        }
-        .btn-check:hover {
-            background: #c3e6cb;
         }
         .actions {
             display: grid;
@@ -195,9 +188,8 @@
             <button class="btn" onclick="addNumber('7')">7</button>
             <button class="btn" onclick="addNumber('8')">8</button>
             <button class="btn" onclick="addNumber('9')">9</button>
-            <button class="btn" onclick="addNumber('0')">0</button>
-            <button class="btn btn-delete" onclick="deleteNumber()">◀ 지우기</button>
-            <button class="btn btn-check" onclick="checkPhone()">✓</button>
+            <button class="btn btn-zero" onclick="addNumber('0')">0</button>
+            <button class="btn btn-delete" onclick="deleteNumber()">지우기</button>
         </div>
         
         <div class="actions">
@@ -228,6 +220,11 @@
             if (phone.length < 4) {
                 phone += n;
                 updateDisplay();
+                
+                // 4자리 다 입력되면 자동 인식
+                if (phone.length === 4) {
+                    checkPhoneAuto();
+                }
             }
         }
         
@@ -241,12 +238,7 @@
             document.getElementById('display').textContent = masked.split('').join(' ');
         }
         
-        function checkPhone() {
-            if (phone.length !== 4) {
-                showMessage('4자리를 모두 입력하세요', 'error');
-                return;
-            }
-            
+        function checkPhoneAuto() {
             loadStudents();
             currentStudent = students.find(s => s.phone.endsWith(phone));
             
@@ -261,7 +253,7 @@
         
         function submitAttendance(type) {
             if (!currentStudent) {
-                showMessage('먼저 번호를 확인하세요', 'error');
+                showMessage('먼저 번호를 입력하세요', 'error');
                 return;
             }
             
