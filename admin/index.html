@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>레이첼영어학원 관리</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --plum:#7a2e4d;
@@ -234,6 +235,48 @@
             <div id="studentEmpty" class="empty" style="display:none;">등록된 학생이 없습니다</div>
           </div>
         </div>
+
+        <div class="card">
+          <h2>📋 일괄 등록</h2>
+
+          <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <button class="btn sm" id="tabPasteBtn" onclick="switchBulkTab('paste')">✍️ 붙여넣기</button>
+            <button class="btn sm ghost" id="tabFileBtn" onclick="switchBulkTab('file')">📁 엑셀 파일 업로드</button>
+          </div>
+
+          <div id="bulkTabPaste">
+            <small class="hint" style="margin-bottom:10px;display:block;">
+              엑셀에서 <strong>이름 · 학교 · 학년 · 부모전화 · 부모이름</strong> 순서로 5개 열을 선택해 복사한 후 아래 칸에 붙여넣으세요.
+              (탭으로 구분되어 자동 인식됩니다 / 태블릿 번호는 자동 생성됩니다)
+            </small>
+            <textarea id="bulkText" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="김민준	하길초	초3	01012345678	김영희&#10;이서연	화원초	초5	01023456789	이철수"></textarea>
+            <button class="btn ghost" style="margin-top:10px;" onclick="previewBulk()">미리보기</button>
+          </div>
+
+          <div id="bulkTabFile" style="display:none;">
+            <small class="hint" style="margin-bottom:10px;display:block;">
+              .xlsx 또는 .xls 파일을 업로드하세요. 첫 번째 행은 헤더(제목)여야 하며,
+              <strong>이름 / 학교 / 학년 / 부모전화 / 부모이름</strong>과 비슷한 이름의 컬럼을 자동으로 찾습니다.
+              (예: 학생이름, 학교이름, 학부모전화1, 학부모이름1 등도 인식됩니다)
+            </small>
+            <input type="file" id="bulkFile" accept=".xlsx,.xls" style="padding:9px 10px;border:1px solid var(--line);border-radius:7px;font-size:13px;background:#fdfbfc;width:100%;">
+            <button class="btn ghost" style="margin-top:10px;" onclick="previewBulkFile()">파일에서 불러오기</button>
+            <div id="bulkFileStatus" style="margin-top:8px;font-size:12px;color:var(--ink-soft);"></div>
+          </div>
+
+          <div id="bulkPreviewWrap" style="display:none;margin-top:16px;">
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;">
+              미리보기: <span id="bulkValidCount">0</span>명 등록 가능
+              <span id="bulkErrorCount" style="color:var(--warn);"></span>
+            </div>
+            <table>
+              <thead><tr><th>이름</th><th>학교</th><th>학년</th><th>부모전화</th><th>부모이름</th><th>생성 번호</th><th>상태</th></tr></thead>
+              <tbody id="bulkPreviewTable"></tbody>
+            </table>
+            <button class="btn" style="margin-top:14px;" onclick="submitBulk()" id="bulkSubmitBtn">일괄 등록 실행</button>
+            <div id="bulkProgress" style="margin-top:10px;font-size:12.5px;color:var(--ink-soft);"></div>
+          </div>
+        </div>
       </div>
 
       <!-- ---------- Classes ---------- -->
@@ -363,6 +406,13 @@ function addStudent() {
     });
 }
 
+/* ---------- Grade sorting ---------- */
+const GRADE_ORDER = ['초1','초2','초3','초4','초5','초6','중1','중2','중3','고1','고2','고3'];
+function gradeRank(g) {
+  const idx = GRADE_ORDER.indexOf((g || '').trim());
+  return idx === -1 ? 999 : idx;
+}
+
 function loadStudents() {
   return fetch(DB_URL + '/students.json')
     .then(res => res.json())
@@ -374,9 +424,22 @@ function loadStudents() {
       document.getElementById('navCount').textContent = count;
       document.getElementById('statTotal').textContent = count;
 
+      const sortedKeys = Object.keys(students).sort((a, b) => {
+        const ga = gradeRank(students[a].grade), gb = gradeRank(students[b].grade);
+        if (ga !== gb) return ga - gb;
+        return (students[a].name || '').localeCompare(students[b].name, 'ko');
+      });
+
       let rows = '';
-      for (let key in students) {
+      let lastGrade = null;
+      sortedKeys.forEach(key => {
         const s = students[key];
+        const g = (s.grade || '미분류').trim() || '미분류';
+        if (g !== lastGrade) {
+          const gCount = sortedKeys.filter(k => (students[k].grade || '미분류').trim() === g).length;
+          rows += `<tr><td colspan="8" style="background:#faf1f5;font-weight:800;color:var(--plum);padding:8px 10px;border-bottom:2px solid var(--line);">${g} (${gCount}명)</td></tr>`;
+          lastGrade = g;
+        }
         rows += `<tr>
           <td><strong>${s.name}</strong></td>
           <td>${s.school || '-'}</td>
@@ -387,7 +450,7 @@ function loadStudents() {
           <td>${s.className ? `<span class="tag class">${s.className}</span>` : '-'}</td>
           <td><button class="del-btn" onclick="deleteStudent('${key}')">삭제</button></td>
         </tr>`;
-      }
+      });
       document.getElementById('studentTable').innerHTML = rows;
       document.getElementById('studentEmpty').style.display = rows ? 'none' : 'block';
       return students;
@@ -397,6 +460,189 @@ function loadStudents() {
 function deleteStudent(key) {
   if (!confirm('삭제하시겠습니까?')) return;
   fetch(DB_URL + '/students/' + key + '.json', { method: 'DELETE' }).then(() => { loadStudents(); loadDashboard(); });
+}
+
+/* ---------- Bulk import ---------- */
+let bulkParsedRows = [];
+
+function switchBulkTab(tab) {
+  document.getElementById('bulkTabPaste').style.display = tab === 'paste' ? 'block' : 'none';
+  document.getElementById('bulkTabFile').style.display = tab === 'file' ? 'block' : 'none';
+  document.getElementById('tabPasteBtn').classList.toggle('ghost', tab !== 'paste');
+  document.getElementById('tabFileBtn').classList.toggle('ghost', tab !== 'file');
+}
+
+function generateUniquePin(usedPins) {
+  let pin;
+  do {
+    pin = String(Math.floor(10000 + Math.random() * 90000));
+  } while (usedPins.has(pin));
+  usedPins.add(pin);
+  return pin;
+}
+
+function buildBulkRow(name, school, grade, phone, pname, usedPins, existingNames) {
+  name = (name || '').toString().trim();
+  school = (school || '').toString().trim();
+  grade = (grade || '').toString().trim();
+  phone = (phone || '').toString().trim();
+  pname = (pname || '').toString().trim();
+
+  let status = 'ok';
+  let note = '등록 가능';
+  if (!name || !school || !grade) { status = 'error'; note = '이름/학교/학년 누락'; }
+  else if (existingNames.has(name)) { status = 'warn'; note = '이미 있는 이름 (중복 등록 주의)'; }
+
+  const pin = (status !== 'error') ? generateUniquePin(usedPins) : '';
+  return { name, school, grade, phone, pname, pin, status, note };
+}
+
+function previewBulk() {
+  const raw = document.getElementById('bulkText').value;
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+  if (lines.length === 0) { alert('붙여넣은 데이터가 없습니다'); return; }
+
+  const existingNames = new Set(Object.values(studentsCache).map(s => s.name));
+  const usedPins = new Set(Object.values(studentsCache).map(s => s.pin));
+
+  bulkParsedRows = lines.map(line => {
+    const cols = line.includes('\t') ? line.split('\t') : line.split(',');
+    return buildBulkRow(cols[0], cols[1], cols[2], cols[3], cols[4], usedPins, existingNames);
+  });
+
+  renderBulkPreview();
+}
+
+/* ---- Excel file upload ---- */
+const HEADER_ALIASES = {
+  name: ['이름', '학생이름', '성명', '학생명'],
+  school: ['학교', '학교이름', '학교명'],
+  grade: ['학년', '학년/반', '반'],
+  phone: ['부모전화', '학부모전화', '학부모전화1', '전화', '연락처', '학부모연락처'],
+  pname: ['부모이름', '학부모이름', '학부모이름1', '보호자이름', '학부모명']
+};
+
+function matchColumnIndex(headers, aliases) {
+  for (let i = 0; i < headers.length; i++) {
+    const h = (headers[i] || '').toString().trim();
+    if (aliases.some(a => h === a || h.includes(a))) return i;
+  }
+  return -1;
+}
+
+function previewBulkFile() {
+  const fileInput = document.getElementById('bulkFile');
+  const file = fileInput.files[0];
+  const statusEl = document.getElementById('bulkFileStatus');
+
+  if (!file) { alert('파일을 선택하세요'); return; }
+  if (typeof XLSX === 'undefined') { alert('엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침 해주세요.'); return; }
+
+  statusEl.textContent = '파일 읽는 중...';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+      if (rows.length < 2) { statusEl.textContent = '데이터가 없습니다.'; return; }
+
+      const headers = rows[0];
+      const idxName = matchColumnIndex(headers, HEADER_ALIASES.name);
+      const idxSchool = matchColumnIndex(headers, HEADER_ALIASES.school);
+      const idxGrade = matchColumnIndex(headers, HEADER_ALIASES.grade);
+      const idxPhone = matchColumnIndex(headers, HEADER_ALIASES.phone);
+      const idxPname = matchColumnIndex(headers, HEADER_ALIASES.pname);
+
+      if (idxName === -1 || idxSchool === -1 || idxGrade === -1) {
+        statusEl.textContent = '❌ "이름", "학교", "학년"에 해당하는 컬럼을 찾지 못했습니다. 헤더 이름을 확인해주세요. (감지된 헤더: ' + headers.join(', ') + ')';
+        return;
+      }
+
+      const existingNames = new Set(Object.values(studentsCache).map(s => s.name));
+      const usedPins = new Set(Object.values(studentsCache).map(s => s.pin));
+
+      bulkParsedRows = rows.slice(1)
+        .filter(r => r.some(c => c !== ''))
+        .map(r => buildBulkRow(
+          r[idxName], r[idxSchool], r[idxGrade],
+          idxPhone !== -1 ? r[idxPhone] : '',
+          idxPname !== -1 ? r[idxPname] : '',
+          usedPins, existingNames
+        ));
+
+      statusEl.textContent = `✅ ${bulkParsedRows.length}행을 읽었습니다.`;
+      renderBulkPreview();
+    } catch (err) {
+      statusEl.textContent = '❌ 파일을 읽는 중 오류가 발생했습니다: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderBulkPreview() {
+  const validCount = bulkParsedRows.filter(r => r.status !== 'error').length;
+  const errorCount = bulkParsedRows.filter(r => r.status === 'error').length;
+
+  document.getElementById('bulkValidCount').textContent = validCount;
+  document.getElementById('bulkErrorCount').textContent = errorCount ? `(오류 ${errorCount}건 제외)` : '';
+
+  let rows = '';
+  bulkParsedRows.forEach(r => {
+    const badge = r.status === 'error'
+      ? `<span class="tag" style="background:#fdeceb;color:var(--warn);">${r.note}</span>`
+      : r.status === 'warn'
+        ? `<span class="tag" style="background:#fff6e0;color:#a86a00;">${r.note}</span>`
+        : `<span class="tag" style="background:#e6f7ee;color:var(--ok);">${r.note}</span>`;
+    rows += `<tr>
+      <td>${r.name || '-'}</td>
+      <td>${r.school || '-'}</td>
+      <td>${r.grade || '-'}</td>
+      <td>${r.phone || '-'}</td>
+      <td>${r.pname || '-'}</td>
+      <td>${r.pin || '-'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  });
+  document.getElementById('bulkPreviewTable').innerHTML = rows;
+  document.getElementById('bulkPreviewWrap').style.display = 'block';
+}
+
+async function submitBulk() {
+  const validRows = bulkParsedRows.filter(r => r.status !== 'error');
+  if (validRows.length === 0) { alert('등록할 수 있는 학생이 없습니다'); return; }
+  if (!confirm(`${validRows.length}명을 등록하시겠습니까?`)) return;
+
+  const btn = document.getElementById('bulkSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '등록 중...';
+
+  let done = 0;
+  const chunkSize = 8;
+  for (let i = 0; i < validRows.length; i += chunkSize) {
+    const chunk = validRows.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(r =>
+      fetch(DB_URL + '/students.json', {
+        method: 'POST',
+        body: JSON.stringify({ name: r.name, school: r.school, grade: r.grade, pin: r.pin, phone: r.phone, pname: r.pname })
+      })
+    ));
+    done += chunk.length;
+    document.getElementById('bulkProgress').textContent = `${done} / ${validRows.length}명 등록 완료...`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = '일괄 등록 실행';
+  document.getElementById('bulkProgress').textContent = `✅ ${validRows.length}명 등록 완료!`;
+  document.getElementById('bulkText').value = '';
+  document.getElementById('bulkPreviewWrap').style.display = 'none';
+  bulkParsedRows = [];
+  loadStudents();
 }
 
 /* ---------- Classes ---------- */
