@@ -72,6 +72,7 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px;}
   .card h2{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
   .grid-2{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start;}
+  .grid-classes{display:grid;grid-template-columns:280px 1fr;gap:18px;align-items:start;}
 
   .form-group{margin-bottom:12px;}
   .form-group label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;}
@@ -81,7 +82,10 @@
        cursor:pointer;font-weight:700;font-size:13.5px;width:100%;margin-top:6px;}
   .btn:hover{background:var(--coral-light);}
   .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink);}
+  .btn.sm{width:auto;padding:7px 12px;font-size:12px;margin-top:0;}
   small.hint{color:var(--ink-soft);font-size:11px;display:block;margin-top:3px;}
+
+  .row-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
   table{width:100%;border-collapse:collapse;font-size:13px;}
   thead th{
@@ -94,11 +98,22 @@
   .tag.active{background:#e6f7ee;color:var(--ok);}
   .tag.checkin{background:#e6f7ee;color:var(--ok);}
   .tag.checkout{background:#fdeceb;color:var(--warn);}
+  .tag.class{background:#f3e6ec;color:var(--plum);}
   .del-btn{border:none;background:none;color:var(--warn);cursor:pointer;font-size:12px;font-weight:700;}
   .empty{padding:30px;text-align:center;color:var(--ink-soft);font-size:13px;}
 
   .toolbar{display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;}
   .toolbar .form-group{margin-bottom:0;min-width:160px;}
+
+  .class-item{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 12px;border:1px solid var(--line);border-radius:8px;
+    margin-bottom:8px;cursor:pointer;font-size:13px;font-weight:600;
+  }
+  .class-item:hover{background:#fdf5f8;}
+  .class-item.selected{border-color:var(--coral);background:#fdf0f5;}
+  .class-item .cnt{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .class-item .del{color:var(--warn);font-size:11px;font-weight:700;background:none;border:none;cursor:pointer;margin-left:8px;}
 
   .soon{
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -111,7 +126,7 @@
   @media (max-width: 900px){
     .sidebar{position:fixed;left:-220px;transition:left .2s;z-index:50;}
     .sidebar.open{left:0;}
-    .grid-2{grid-template-columns:1fr;}
+    .grid-2,.grid-classes{grid-template-columns:1fr;}
     .stat-row{grid-template-columns:1fr 1fr;}
     .menu-toggle{display:inline-block !important;}
   }
@@ -132,6 +147,9 @@
       </div>
       <div class="nav-item" data-page="students">
         <span class="nav-icon">👥</span><span>학생 관리</span><span class="nav-badge" id="navCount">0</span>
+      </div>
+      <div class="nav-item" data-page="classes">
+        <span class="nav-icon">🏫</span><span>클래스 관리</span>
       </div>
       <div class="nav-item" data-page="homework">
         <span class="nav-icon">📝</span><span>숙제 관리</span>
@@ -159,6 +177,7 @@
 
     <div class="content">
 
+      <!-- ---------- Dashboard ---------- -->
       <div class="page active" id="page-dashboard">
         <div class="stat-row">
           <div class="stat-card">
@@ -184,12 +203,16 @@
         </div>
       </div>
 
+      <!-- ---------- Students ---------- -->
       <div class="page" id="page-students">
         <div class="grid-2">
           <div class="card">
             <h2>➕ 학생 등록</h2>
             <div class="form-group"><label>이름 *</label><input type="text" id="name"></div>
-            <div class="form-group"><label>학년/반 *</label><input type="text" id="grade"></div>
+            <div class="row-2">
+              <div class="form-group"><label>학교 *</label><input type="text" id="school" placeholder="예: 하길초"></div>
+              <div class="form-group"><label>학년 *</label><input type="text" id="grade" placeholder="예: 초3"></div>
+            </div>
             <div class="form-group">
               <label>태블릿 번호 * (5자리)</label>
               <input type="text" id="pin" maxlength="5">
@@ -204,7 +227,7 @@
             <h2>👥 학생 목록 (<span id="count">0</span>)</h2>
             <table>
               <thead>
-                <tr><th>이름</th><th>학년/반</th><th>번호</th><th>부모</th><th>연락처</th><th></th></tr>
+                <tr><th>이름</th><th>학교</th><th>학년</th><th>번호</th><th>부모</th><th>연락처</th><th>클래스</th><th></th></tr>
               </thead>
               <tbody id="studentTable"></tbody>
             </table>
@@ -213,6 +236,31 @@
         </div>
       </div>
 
+      <!-- ---------- Classes ---------- -->
+      <div class="page" id="page-classes">
+        <div class="grid-classes">
+          <div class="card">
+            <h2>🏫 클래스 목록</h2>
+            <div class="form-group">
+              <label>새 클래스 이름</label>
+              <input type="text" id="newClassName" placeholder="예: selah 2:00">
+            </div>
+            <button class="btn" onclick="addClass()">클래스 추가</button>
+            <div style="margin-top:16px;" id="classList"></div>
+          </div>
+
+          <div class="card">
+            <h2 id="classPanelTitle">👥 학생을 클래스에 배정</h2>
+            <table>
+              <thead><tr><th>이름</th><th>학교</th><th>학년</th><th>현재 클래스</th><th style="width:180px;">배정</th></tr></thead>
+              <tbody id="classAssignTable"></tbody>
+            </table>
+            <div id="classAssignEmpty" class="empty" style="display:none;">등록된 학생이 없습니다</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------- Homework (준비중) ---------- -->
       <div class="page" id="page-homework">
         <div class="card">
           <div class="soon">
@@ -223,6 +271,7 @@
         </div>
       </div>
 
+      <!-- ---------- Word Test (준비중) ---------- -->
       <div class="page" id="page-wordtest">
         <div class="card">
           <div class="soon">
@@ -233,6 +282,7 @@
         </div>
       </div>
 
+      <!-- ---------- Attendance ---------- -->
       <div class="page" id="page-attendance">
         <div class="card">
           <div class="toolbar">
@@ -260,9 +310,11 @@
 <script>
 const DB_URL = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
 let studentsCache = {};
+let classesCache = {};
 
+/* ---------- Navigation ---------- */
 const pageTitles = {
-  dashboard: '대시보드', students: '학생 관리', homework: '숙제 관리',
+  dashboard: '대시보드', students: '학생 관리', classes: '클래스 관리', homework: '숙제 관리',
   wordtest: '단어 시험', attendance: '출결 기록'
 };
 document.querySelectorAll('.nav-item').forEach(item => {
@@ -275,6 +327,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.getElementById('pageTitle').textContent = pageTitles[key];
     if (key === 'attendance') loadAttendance();
     if (key === 'dashboard') loadDashboard();
+    if (key === 'classes') loadClasses();
     document.getElementById('sidebar').classList.remove('open');
   });
 });
@@ -282,14 +335,16 @@ document.getElementById('menuToggle').addEventListener('click', () => {
   document.getElementById('sidebar').classList.toggle('open');
 });
 
+/* ---------- Students ---------- */
 function addStudent() {
   const name = document.getElementById('name').value.trim();
+  const school = document.getElementById('school').value.trim();
   const grade = document.getElementById('grade').value.trim();
   const pin = document.getElementById('pin').value.trim();
   const phone = document.getElementById('phone').value.trim();
   const pname = document.getElementById('pname').value.trim();
 
-  if (!name || !grade || !pin) { alert('필수 항목을 입력하세요'); return; }
+  if (!name || !school || !grade || !pin) { alert('필수 항목을 입력하세요'); return; }
   if (pin.length !== 5) { alert('5자리여야 합니다'); return; }
 
   fetch(DB_URL + '/students.json')
@@ -299,9 +354,9 @@ function addStudent() {
       for (let key in students) {
         if (students[key].pin === pin) { alert('이미 사용 중인 번호입니다'); return; }
       }
-      fetch(DB_URL + '/students.json', { method: 'POST', body: JSON.stringify({name, grade, pin, phone, pname}) })
+      fetch(DB_URL + '/students.json', { method: 'POST', body: JSON.stringify({name, school, grade, pin, phone, pname}) })
         .then(() => {
-          ['name','grade','pin','phone','pname'].forEach(id => document.getElementById(id).value = '');
+          ['name','school','grade','pin','phone','pname'].forEach(id => document.getElementById(id).value = '');
           loadStudents();
           alert('등록되었습니다');
         });
@@ -324,10 +379,12 @@ function loadStudents() {
         const s = students[key];
         rows += `<tr>
           <td><strong>${s.name}</strong></td>
+          <td>${s.school || '-'}</td>
           <td>${s.grade || '-'}</td>
           <td>${s.pin}</td>
           <td>${s.pname || '-'}</td>
           <td>${s.phone || '-'}</td>
+          <td>${s.className ? `<span class="tag class">${s.className}</span>` : '-'}</td>
           <td><button class="del-btn" onclick="deleteStudent('${key}')">삭제</button></td>
         </tr>`;
       }
@@ -342,6 +399,97 @@ function deleteStudent(key) {
   fetch(DB_URL + '/students/' + key + '.json', { method: 'DELETE' }).then(() => { loadStudents(); loadDashboard(); });
 }
 
+/* ---------- Classes ---------- */
+function addClass() {
+  const name = document.getElementById('newClassName').value.trim();
+  if (!name) { alert('클래스 이름을 입력하세요'); return; }
+
+  fetch(DB_URL + '/classes.json')
+    .then(res => res.json())
+    .then(data => {
+      const classes = data || {};
+      for (let key in classes) {
+        if (classes[key].name === name) { alert('이미 있는 클래스 이름입니다'); return; }
+      }
+      fetch(DB_URL + '/classes.json', { method: 'POST', body: JSON.stringify({name}) })
+        .then(() => {
+          document.getElementById('newClassName').value = '';
+          loadClasses();
+        });
+    });
+}
+
+function deleteClass(key, name) {
+  if (!confirm(`"${name}" 클래스를 삭제하시겠습니까? 배정된 학생의 클래스 정보도 함께 지워집니다.`)) return;
+  fetch(DB_URL + '/classes/' + key + '.json', { method: 'DELETE' })
+    .then(() => {
+      const updates = {};
+      for (let sKey in studentsCache) {
+        if (studentsCache[sKey].className === name) updates[sKey] = null;
+      }
+      const tasks = Object.keys(updates).map(sKey =>
+        fetch(DB_URL + '/students/' + sKey + '/className.json', { method: 'DELETE' })
+      );
+      Promise.all(tasks).then(() => loadClasses());
+    });
+}
+
+function assignClass(studentKey, className) {
+  const payload = className ? JSON.stringify(className) : null;
+  const req = className
+    ? fetch(DB_URL + '/students/' + studentKey + '/className.json', { method: 'PUT', body: payload })
+    : fetch(DB_URL + '/students/' + studentKey + '/className.json', { method: 'DELETE' });
+  req.then(() => loadClasses());
+}
+
+function loadClasses() {
+  return Promise.all([
+    fetch(DB_URL + '/classes.json').then(r => r.json()),
+    loadStudents()
+  ]).then(([classData, students]) => {
+    const classes = classData || {};
+    classesCache = classes;
+
+    const countByName = {};
+    Object.values(students).forEach(s => {
+      if (s.className) countByName[s.className] = (countByName[s.className] || 0) + 1;
+    });
+
+    let listHtml = '';
+    for (let key in classes) {
+      const c = classes[key];
+      listHtml += `<div class="class-item">
+        <span>${c.name} <span class="cnt">(${countByName[c.name] || 0}명)</span></span>
+        <button class="del" onclick="deleteClass('${key}','${c.name}')">삭제</button>
+      </div>`;
+    }
+    document.getElementById('classList').innerHTML = listHtml || '<div class="empty">클래스가 없습니다. 먼저 추가해주세요.</div>';
+
+    let optionsHtml = '<option value="">- 미배정 -</option>';
+    for (let key in classes) {
+      optionsHtml += `<option value="${classes[key].name}">${classes[key].name}</option>`;
+    }
+
+    let rows = '';
+    for (let sKey in students) {
+      const s = students[sKey];
+      let selectHtml = optionsHtml.replace(
+        `value="${s.className}"`, `value="${s.className}" selected`
+      );
+      rows += `<tr>
+        <td><strong>${s.name}</strong></td>
+        <td>${s.school || '-'}</td>
+        <td>${s.grade || '-'}</td>
+        <td>${s.className ? `<span class="tag class">${s.className}</span>` : '-'}</td>
+        <td><select onchange="assignClass('${sKey}', this.value)">${selectHtml}</select></td>
+      </tr>`;
+    }
+    document.getElementById('classAssignTable').innerHTML = rows;
+    document.getElementById('classAssignEmpty').style.display = rows ? 'none' : 'block';
+  });
+}
+
+/* ---------- Attendance ---------- */
 function loadAttendance() {
   const date = document.getElementById('date').value;
   const mode = document.getElementById('mode').value;
@@ -366,6 +514,7 @@ function loadAttendance() {
     });
 }
 
+/* ---------- Dashboard ---------- */
 function loadDashboard() {
   const today = new Date().toISOString().slice(0,10);
   Promise.all([
@@ -392,6 +541,7 @@ function loadDashboard() {
   });
 }
 
+/* ---------- Init ---------- */
 window.addEventListener('load', () => {
   document.getElementById('date').valueAsDate = new Date();
   document.getElementById('date').addEventListener('change', loadAttendance);
