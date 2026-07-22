@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>학원 관리 시스템</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8c 100%);
+            font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -20,7 +22,7 @@
             margin-bottom: 2rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .header h1 { font-size: 28px; color: #1e3a8a; }
+        .header h1 { font-size: 28px; color: #ff6b9d; font-family: 'Fredoka', sans-serif; }
         .header p { color: #666; font-size: 14px; }
         .tab-buttons {
             display: grid;
@@ -36,9 +38,10 @@
             cursor: pointer;
             font-weight: 600;
             font-size: 14px;
+            font-family: 'Fredoka', sans-serif;
         }
         .tab-btn.active {
-            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8c 100%);
+            background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 100%);
             color: white;
             border-color: transparent;
         }
@@ -51,7 +54,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             margin-bottom: 2rem;
         }
-        .card h2 { font-size: 20px; margin-bottom: 1.5rem; }
+        .card h2 { font-size: 20px; margin-bottom: 1.5rem; color: #333; font-family: 'Fredoka', sans-serif; }
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -59,11 +62,12 @@
             margin-bottom: 2rem;
         }
         .stat-box {
-            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8c 100%);
+            background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 100%);
             color: white;
             padding: 1.5rem;
             border-radius: 12px;
             text-align: center;
+            font-family: 'Fredoka', sans-serif;
         }
         .stat-number { font-size: 32px; font-weight: 700; }
         .form-group { margin-bottom: 1rem; }
@@ -71,17 +75,18 @@
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
+            font-family: 'Fredoka', sans-serif;
         }
         input, textarea, select {
             width: 100%;
             padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-family: inherit;
+            font-family: 'Fredoka', sans-serif;
         }
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #1e3a8a;
+            border-color: #ff6b9d;
         }
         button {
             padding: 12px 24px;
@@ -90,9 +95,10 @@
             cursor: pointer;
             font-weight: 600;
             width: 100%;
+            font-family: 'Fredoka', sans-serif;
         }
         .btn-primary {
-            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8c 100%);
+            background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 100%);
             color: white;
         }
         .btn-danger { background: #ff6b6b; color: white; padding: 6px 12px; font-size: 12px; width: auto; }
@@ -101,7 +107,7 @@
             padding: 1.5rem;
             border-radius: 8px;
             margin-bottom: 1rem;
-            border-left: 4px solid #1e3a8a;
+            border-left: 4px solid #ff6b9d;
             cursor: pointer;
             transition: all 0.2s;
         }
@@ -109,7 +115,7 @@
             background: #e9ecef;
             transform: translateX(5px);
         }
-        .student-name { font-weight: 600; margin-bottom: 0.5rem; }
+        .student-name { font-weight: 600; margin-bottom: 0.5rem; font-family: 'Fredoka', sans-serif; }
         .student-detail { font-size: 13px; color: #666; }
         .grid-2 {
             display: grid;
@@ -124,9 +130,8 @@
             color: white;
             text-decoration: none;
             font-size: 14px;
+            font-family: 'Fredoka', sans-serif;
         }
-        
-        /* 모달 */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
         .modal.show { display: flex; align-items: center; justify-content: center; }
         .modal-content {
@@ -135,8 +140,9 @@
             border-radius: 16px;
             max-width: 500px;
             width: 90%;
+            font-family: 'Fredoka', sans-serif;
         }
-        .modal-content h2 { margin-bottom: 1.5rem; color: #1e3a8a; }
+        .modal-content h2 { margin-bottom: 1.5rem; color: #ff6b9d; }
         .modal-info { margin-bottom: 1rem; }
         .modal-label { font-weight: 600; color: #666; font-size: 12px; }
         .modal-value { font-size: 16px; font-weight: 600; color: #333; margin: 5px 0 15px 0; }
@@ -154,7 +160,7 @@
         <a href="/" class="back-link">← 출석 입력 화면</a>
         
         <div class="header">
-            <h1>📚 학원 관리</h1>
+            <h1>🎨 레이첼영어학원 관리</h1>
             <p>학생 정보 및 출결 관리</p>
         </div>
         
@@ -209,8 +215,14 @@
                         <input type="text" id="studentGrade">
                     </div>
                     <div class="form-group">
-                        <label>태블릿 입력 번호 * (4자리)</label>
-                        <input type="text" id="pinCode" maxlength="4">
+                        <label>태블릿 입력 번호 * (5자리)</label>
+                        <input type="text" id="pinCode" maxlength="5" placeholder="예: 20901">
+                    </div>
+                    <div class="form-group">
+                        <label style="font-size: 12px; color: #999;">
+                            💡 부모님 뒷자리 + (첫째:1 / 둘째:2 / 셋째:3)<br>
+                            예) 2090 → 20901 (첫째) / 20902 (둘째)
+                        </label>
                     </div>
                     <div class="form-group">
                         <label>부모 전화번호</label>
@@ -264,7 +276,6 @@
         </div>
     </div>
     
-    <!-- 학생 상세 정보 모달 -->
     <div id="studentModal" class="modal">
         <div class="modal-content">
             <h2 id="modalStudentName">학생이름</h2>
@@ -332,8 +343,8 @@
                 return;
             }
             
-            if (pinCode.length !== 4) {
-                alert('4자리여야 합니다');
+            if (pinCode.length !== 5) {
+                alert('5자리여야 합니다');
                 return;
             }
             
