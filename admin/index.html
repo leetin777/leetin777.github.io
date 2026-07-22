@@ -215,7 +215,7 @@
               <div class="form-group"><label>학년 *</label><input type="text" id="grade" placeholder="예: 초3"></div>
             </div>
             <div class="form-group">
-              <label>태블릿 번호 * (5자리)</label>
+              <label>출결코드 * (5자리)</label>
               <input type="text" id="pin" maxlength="5">
               <small class="hint">예: 2331 → 23311</small>
             </div>
@@ -226,9 +226,10 @@
 
           <div class="card">
             <h2>👥 학생 목록 (<span id="count">0</span>)</h2>
+            <button class="btn ghost sm" style="margin-bottom:10px;color:var(--warn);border-color:var(--warn);" onclick="deleteAllStudents()">🗑️ 전체 학생 삭제</button>
             <table>
               <thead>
-                <tr><th>이름</th><th>학교</th><th>학년</th><th>번호</th><th>부모</th><th>연락처</th><th>클래스</th><th></th></tr>
+                <tr><th>이름</th><th>학교</th><th>학년</th><th>출결코드</th><th>부모</th><th>연락처</th><th>클래스</th><th></th></tr>
               </thead>
               <tbody id="studentTable"></tbody>
             </table>
@@ -247,7 +248,7 @@
           <div id="bulkTabPaste">
             <small class="hint" style="margin-bottom:10px;display:block;">
               엑셀에서 <strong>이름 · 학교 · 학년 · 부모전화 · 부모이름</strong> 순서로 5개 열을 선택해 복사한 후 아래 칸에 붙여넣으세요.
-              (탭으로 구분되어 자동 인식됩니다 / 태블릿 번호는 자동 생성됩니다)
+              (탭으로 구분되어 자동 인식됩니다 / 출결코드는 자동 생성됩니다)
             </small>
             <textarea id="bulkText" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="김민준	하길초	초3	01012345678	김영희&#10;이서연	화원초	초5	01023456789	이철수"></textarea>
             <button class="btn ghost" style="margin-top:10px;" onclick="previewBulk()">미리보기</button>
@@ -270,7 +271,7 @@
               <span id="bulkErrorCount" style="color:var(--warn);"></span>
             </div>
             <table>
-              <thead><tr><th>이름</th><th>학교</th><th>학년</th><th>부모전화</th><th>부모이름</th><th>생성 번호</th><th>상태</th></tr></thead>
+              <thead><tr><th>이름</th><th>학교</th><th>학년</th><th>부모전화</th><th>부모이름</th><th>클래스</th><th>생성 출결코드</th><th>상태</th></tr></thead>
               <tbody id="bulkPreviewTable"></tbody>
             </table>
             <button class="btn" style="margin-top:14px;" onclick="submitBulk()" id="bulkSubmitBtn">일괄 등록 실행</button>
@@ -395,7 +396,7 @@ function addStudent() {
     .then(data => {
       const students = data || {};
       for (let key in students) {
-        if (students[key].pin === pin) { alert('이미 사용 중인 번호입니다'); return; }
+        if (students[key].pin === pin) { alert('이미 사용 중인 출결코드입니다'); return; }
       }
       fetch(DB_URL + '/students.json', { method: 'POST', body: JSON.stringify({name, school, grade, pin, phone, pname}) })
         .then(() => {
@@ -462,6 +463,20 @@ function deleteStudent(key) {
   fetch(DB_URL + '/students/' + key + '.json', { method: 'DELETE' }).then(() => { loadStudents(); loadDashboard(); });
 }
 
+function deleteAllStudents() {
+  const count = Object.keys(studentsCache).length;
+  if (count === 0) { alert('삭제할 학생이 없습니다'); return; }
+  if (!confirm(`정말 전체 학생 ${count}명을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
+  if (!confirm(`마지막 확인입니다. ${count}명 전체를 삭제할까요?`)) return;
+
+  fetch(DB_URL + '/students.json', { method: 'DELETE' })
+    .then(() => {
+      loadStudents();
+      loadDashboard();
+      alert('전체 학생이 삭제되었습니다');
+    });
+}
+
 /* ---------- Bulk import ---------- */
 let bulkParsedRows = [];
 
@@ -518,15 +533,23 @@ function previewBulk() {
 const HEADER_ALIASES = {
   name: ['이름', '학생이름', '성명', '학생명'],
   school: ['학교', '학교이름', '학교명'],
-  grade: ['학년', '학년/반', '반'],
-  phone: ['부모전화', '학부모전화', '학부모전화1', '전화', '연락처', '학부모연락처'],
-  pname: ['부모이름', '학부모이름', '학부모이름1', '보호자이름', '학부모명']
+  grade: ['학년', '학년/나이', '학년/반'],
+  phone: ['부모전화', '학부모전화', '학부모전화1', '학부모연락처', '연락처', '전화'],
+  pname: ['부모이름', '학부모이름', '학부모이름1', '보호자이름', '학부모명'],
+  className: ['클래스1', '클래스', '수강클래스', '반배정']
 };
 
-function matchColumnIndex(headers, aliases) {
+function matchColumnIndex(headers, aliases, usedIndices) {
+  usedIndices = usedIndices || new Set();
   for (let i = 0; i < headers.length; i++) {
+    if (usedIndices.has(i)) continue;
     const h = (headers[i] || '').toString().trim();
-    if (aliases.some(a => h === a || h.includes(a))) return i;
+    if (aliases.includes(h)) return i;
+  }
+  for (let i = 0; i < headers.length; i++) {
+    if (usedIndices.has(i)) continue;
+    const h = (headers[i] || '').toString().trim();
+    if (aliases.some(a => h.includes(a))) return i;
   }
   return -1;
 }
@@ -553,11 +576,13 @@ function previewBulkFile() {
       if (rows.length < 2) { statusEl.textContent = '데이터가 없습니다.'; return; }
 
       const headers = rows[0];
-      const idxName = matchColumnIndex(headers, HEADER_ALIASES.name);
-      const idxSchool = matchColumnIndex(headers, HEADER_ALIASES.school);
-      const idxGrade = matchColumnIndex(headers, HEADER_ALIASES.grade);
-      const idxPhone = matchColumnIndex(headers, HEADER_ALIASES.phone);
-      const idxPname = matchColumnIndex(headers, HEADER_ALIASES.pname);
+      const used = new Set();
+      const idxName = matchColumnIndex(headers, HEADER_ALIASES.name, used); if (idxName !== -1) used.add(idxName);
+      const idxSchool = matchColumnIndex(headers, HEADER_ALIASES.school, used); if (idxSchool !== -1) used.add(idxSchool);
+      const idxGrade = matchColumnIndex(headers, HEADER_ALIASES.grade, used); if (idxGrade !== -1) used.add(idxGrade);
+      const idxPhone = matchColumnIndex(headers, HEADER_ALIASES.phone, used); if (idxPhone !== -1) used.add(idxPhone);
+      const idxPname = matchColumnIndex(headers, HEADER_ALIASES.pname, used); if (idxPname !== -1) used.add(idxPname);
+      const idxClass = matchColumnIndex(headers, HEADER_ALIASES.className, used); if (idxClass !== -1) used.add(idxClass);
 
       if (idxName === -1 || idxSchool === -1 || idxGrade === -1) {
         statusEl.textContent = '❌ "이름", "학교", "학년"에 해당하는 컬럼을 찾지 못했습니다. 헤더 이름을 확인해주세요. (감지된 헤더: ' + headers.join(', ') + ')';
@@ -569,14 +594,21 @@ function previewBulkFile() {
 
       bulkParsedRows = rows.slice(1)
         .filter(r => r.some(c => c !== ''))
-        .map(r => buildBulkRow(
-          r[idxName], r[idxSchool], r[idxGrade],
-          idxPhone !== -1 ? r[idxPhone] : '',
-          idxPname !== -1 ? r[idxPname] : '',
-          usedPins, existingNames
-        ));
+        .map(r => {
+          const row = buildBulkRow(
+            r[idxName], r[idxSchool], r[idxGrade],
+            idxPhone !== -1 ? r[idxPhone] : '',
+            idxPname !== -1 ? r[idxPname] : '',
+            usedPins, existingNames
+          );
+          row.className = idxClass !== -1 ? (r[idxClass] || '').toString().trim() : '';
+          return row;
+        });
 
-      statusEl.textContent = `✅ ${bulkParsedRows.length}행을 읽었습니다.`;
+      const detected = ['이름:' + headers[idxName], '학교:' + headers[idxSchool], '학년:' + headers[idxGrade]];
+      if (idxPhone !== -1) detected.push('전화:' + headers[idxPhone]);
+      if (idxClass !== -1) detected.push('클래스:' + headers[idxClass]);
+      statusEl.textContent = `✅ ${bulkParsedRows.length}행을 읽었습니다. (인식된 컬럼 → ${detected.join(', ')})`;
       renderBulkPreview();
     } catch (err) {
       statusEl.textContent = '❌ 파일을 읽는 중 오류가 발생했습니다: ' + err.message;
@@ -605,6 +637,7 @@ function renderBulkPreview() {
       <td>${r.grade || '-'}</td>
       <td>${r.phone || '-'}</td>
       <td>${r.pname || '-'}</td>
+      <td>${r.className ? `<span class="tag class">${r.className}</span>` : '-'}</td>
       <td>${r.pin || '-'}</td>
       <td>${badge}</td>
     </tr>`;
@@ -622,16 +655,26 @@ async function submitBulk() {
   btn.disabled = true;
   btn.textContent = '등록 중...';
 
+  const neededClasses = [...new Set(validRows.map(r => r.className).filter(c => c))];
+  if (neededClasses.length > 0) {
+    document.getElementById('bulkProgress').textContent = '클래스 확인 중...';
+    const existingClasses = await fetch(DB_URL + '/classes.json').then(r => r.json()) || {};
+    const existingClassNames = new Set(Object.values(existingClasses).map(c => c.name));
+    const toCreate = neededClasses.filter(c => !existingClassNames.has(c));
+    for (const cname of toCreate) {
+      await fetch(DB_URL + '/classes.json', { method: 'POST', body: JSON.stringify({ name: cname }) });
+    }
+  }
+
   let done = 0;
   const chunkSize = 8;
   for (let i = 0; i < validRows.length; i += chunkSize) {
     const chunk = validRows.slice(i, i + chunkSize);
-    await Promise.all(chunk.map(r =>
-      fetch(DB_URL + '/students.json', {
-        method: 'POST',
-        body: JSON.stringify({ name: r.name, school: r.school, grade: r.grade, pin: r.pin, phone: r.phone, pname: r.pname })
-      })
-    ));
+    await Promise.all(chunk.map(r => {
+      const payload = { name: r.name, school: r.school, grade: r.grade, pin: r.pin, phone: r.phone, pname: r.pname };
+      if (r.className) payload.className = r.className;
+      return fetch(DB_URL + '/students.json', { method: 'POST', body: JSON.stringify(payload) });
+    }));
     done += chunk.length;
     document.getElementById('bulkProgress').textContent = `${done} / ${validRows.length}명 등록 완료...`;
   }
