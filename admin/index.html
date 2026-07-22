@@ -132,6 +132,22 @@
     .menu-toggle{display:inline-block !important;}
   }
   .menu-toggle{display:none;background:none;border:none;font-size:20px;cursor:pointer;margin-right:10px;}
+
+  /* ---- Modal ---- */
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(43,34,48,.5);
+    z-index:100;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:#fff;border-radius:14px;padding:24px;width:100%;max-width:420px;
+    max-height:90vh;overflow-y:auto;
+  }
+  .modal-box h2{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);}
+  .modal-actions{display:flex;gap:8px;margin-top:6px;}
+  .modal-actions .btn{margin-top:0;}
+  tbody tr[data-clickable]{cursor:pointer;}
 </style>
 </head>
 <body>
@@ -351,6 +367,29 @@
   </div>
 </div>
 
+<!-- ===== Student Detail Modal ===== -->
+<div class="modal-overlay" id="studentModal" onclick="if(event.target===this) closeStudentModal()">
+  <div class="modal-box">
+    <h2>
+      <span>👤 학생 정보</span>
+      <button class="modal-close" onclick="closeStudentModal()">✕</button>
+    </h2>
+    <div class="form-group"><label>이름</label><input type="text" id="m_name"></div>
+    <div class="row-2">
+      <div class="form-group"><label>학교</label><input type="text" id="m_school"></div>
+      <div class="form-group"><label>학년</label><input type="text" id="m_grade"></div>
+    </div>
+    <div class="form-group"><label>출결코드</label><input type="text" id="m_pin" maxlength="5"></div>
+    <div class="form-group"><label>부모 이름</label><input type="text" id="m_pname"></div>
+    <div class="form-group"><label>부모 전화</label><input type="text" id="m_phone"></div>
+    <div class="form-group"><label>클래스</label><select id="m_className"></select></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="saveStudentModal()">저장</button>
+      <button class="btn ghost" onclick="closeStudentModal()">취소</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const DB_URL = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
 let studentsCache = {};
@@ -425,6 +464,7 @@ function loadStudents() {
       document.getElementById('navCount').textContent = count;
       document.getElementById('statTotal').textContent = count;
 
+      // 학년순 → 이름순으로 정렬
       const sortedKeys = Object.keys(students).sort((a, b) => {
         const ga = gradeRank(students[a].grade), gb = gradeRank(students[b].grade);
         if (ga !== gb) return ga - gb;
@@ -441,7 +481,7 @@ function loadStudents() {
           rows += `<tr><td colspan="8" style="background:#faf1f5;font-weight:800;color:var(--plum);padding:8px 10px;border-bottom:2px solid var(--line);">${g} (${gCount}명)</td></tr>`;
           lastGrade = g;
         }
-        rows += `<tr>
+        rows += `<tr data-clickable onclick="openStudentModal('${key}')">
           <td><strong>${s.name}</strong></td>
           <td>${s.school || '-'}</td>
           <td>${s.grade || '-'}</td>
@@ -449,7 +489,7 @@ function loadStudents() {
           <td>${s.pname || '-'}</td>
           <td>${s.phone || '-'}</td>
           <td>${s.className ? `<span class="tag class">${s.className}</span>` : '-'}</td>
-          <td><button class="del-btn" onclick="deleteStudent('${key}')">삭제</button></td>
+          <td><button class="del-btn" onclick="event.stopPropagation(); deleteStudent('${key}')">삭제</button></td>
         </tr>`;
       });
       document.getElementById('studentTable').innerHTML = rows;
@@ -474,6 +514,70 @@ function deleteAllStudents() {
       loadStudents();
       loadDashboard();
       alert('전체 학생이 삭제되었습니다');
+    });
+}
+
+/* ---------- Student detail modal ---------- */
+let currentModalKey = null;
+
+function openStudentModal(key) {
+  const s = studentsCache[key];
+  if (!s) return;
+  currentModalKey = key;
+
+  document.getElementById('m_name').value = s.name || '';
+  document.getElementById('m_school').value = s.school || '';
+  document.getElementById('m_grade').value = s.grade || '';
+  document.getElementById('m_pin').value = s.pin || '';
+  document.getElementById('m_pname').value = s.pname || '';
+  document.getElementById('m_phone').value = s.phone || '';
+
+  fetch(DB_URL + '/classes.json')
+    .then(r => r.json())
+    .then(data => {
+      const classes = data || {};
+      let optionsHtml = '<option value="">- 미배정 -</option>';
+      for (let ck in classes) {
+        const sel = classes[ck].name === s.className ? ' selected' : '';
+        optionsHtml += `<option value="${classes[ck].name}"${sel}>${classes[ck].name}</option>`;
+      }
+      document.getElementById('m_className').innerHTML = optionsHtml;
+    });
+
+  document.getElementById('studentModal').classList.add('open');
+}
+
+function closeStudentModal() {
+  document.getElementById('studentModal').classList.remove('open');
+  currentModalKey = null;
+}
+
+function saveStudentModal() {
+  if (!currentModalKey) return;
+  const name = document.getElementById('m_name').value.trim();
+  const school = document.getElementById('m_school').value.trim();
+  const grade = document.getElementById('m_grade').value.trim();
+  const pin = document.getElementById('m_pin').value.trim();
+  const pname = document.getElementById('m_pname').value.trim();
+  const phone = document.getElementById('m_phone').value.trim();
+  const className = document.getElementById('m_className').value;
+
+  if (!name || !school || !grade || !pin) { alert('이름/학교/학년/출결코드는 필수입니다'); return; }
+  if (pin.length !== 5) { alert('출결코드는 5자리여야 합니다'); return; }
+
+  const payload = { name, school, grade, pin, pname, phone };
+  if (className) payload.className = className;
+
+  fetch(DB_URL + '/students/' + currentModalKey + '.json', { method: 'PATCH', body: JSON.stringify(payload) })
+    .then(() => {
+      if (!className) {
+        return fetch(DB_URL + '/students/' + currentModalKey + '/className.json', { method: 'DELETE' });
+      }
+    })
+    .then(() => {
+      closeStudentModal();
+      loadStudents();
+      loadDashboard();
     });
 }
 
@@ -541,11 +645,13 @@ const HEADER_ALIASES = {
 
 function matchColumnIndex(headers, aliases, usedIndices) {
   usedIndices = usedIndices || new Set();
+  // 1순위: 정확히 일치하는 헤더
   for (let i = 0; i < headers.length; i++) {
     if (usedIndices.has(i)) continue;
     const h = (headers[i] || '').toString().trim();
     if (aliases.includes(h)) return i;
   }
+  // 2순위: 헤더에 별칭 단어가 포함된 경우 (fallback)
   for (let i = 0; i < headers.length; i++) {
     if (usedIndices.has(i)) continue;
     const h = (headers[i] || '').toString().trim();
@@ -655,6 +761,7 @@ async function submitBulk() {
   btn.disabled = true;
   btn.textContent = '등록 중...';
 
+  // 1단계: 필요한 클래스 먼저 자동 생성
   const neededClasses = [...new Set(validRows.map(r => r.className).filter(c => c))];
   if (neededClasses.length > 0) {
     document.getElementById('bulkProgress').textContent = '클래스 확인 중...';
@@ -666,6 +773,7 @@ async function submitBulk() {
     }
   }
 
+  // 2단계: 학생 등록
   let done = 0;
   const chunkSize = 8;
   for (let i = 0; i < validRows.length; i += chunkSize) {
@@ -739,6 +847,7 @@ function loadClasses() {
     const classes = classData || {};
     classesCache = classes;
 
+    // count students per class
     const countByName = {};
     Object.values(students).forEach(s => {
       if (s.className) countByName[s.className] = (countByName[s.className] || 0) + 1;
@@ -754,6 +863,7 @@ function loadClasses() {
     }
     document.getElementById('classList').innerHTML = listHtml || '<div class="empty">클래스가 없습니다. 먼저 추가해주세요.</div>';
 
+    // options for select
     let optionsHtml = '<option value="">- 미배정 -</option>';
     for (let key in classes) {
       optionsHtml += `<option value="${classes[key].name}">${classes[key].name}</option>`;
