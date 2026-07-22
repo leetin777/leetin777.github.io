@@ -1,219 +1,404 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>학원 관리</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        .header h1 { color: #ff6b9d; font-size: 28px; }
-        .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 10px; background: white; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .tab-btn.active { background: #ff6b9d; color: white; border: none; }
-        .tab { display: none; }
-        .tab.active { display: block; }
-        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        .card h2 { font-size: 18px; margin-bottom: 15px; }
-        .form-group { margin-bottom: 10px; }
-        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { width: 100%; padding: 10px; background: #ff6b9d; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .student-item { background: #f5f5f5; padding: 15px; border-left: 4px solid #ff6b9d; margin-bottom: 10px; cursor: pointer; border-radius: 5px; }
-        .student-item:hover { background: #e9ecef; }
-        .student-name { font-weight: bold; margin-bottom: 5px; }
-        .student-detail { font-size: 12px; color: #666; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .back-link { color: white; text-decoration: none; font-size: 14px; display: block; margin-bottom: 20px; }
-        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>레이첼영어학원 관리</title>
+<style>
+  :root{
+    --plum:#7a2e4d;
+    --plum-dark:#5c2039;
+    --coral:#ff6b9d;
+    --coral-light:#ff8fab;
+    --bg:#f6f3f5;
+    --card:#ffffff;
+    --line:#ecdfe5;
+    --ink:#2b2230;
+    --ink-soft:#8a7a85;
+    --ok:#2fae66;
+    --warn:#e2574c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Pretendard','Apple SD Gothic Neo',Arial,sans-serif;background:var(--bg);color:var(--ink);}
+
+  .shell{display:flex;min-height:100vh;}
+
+  .sidebar{
+    width:220px;flex-shrink:0;
+    background:linear-gradient(180deg,var(--plum) 0%,var(--plum-dark) 100%);
+    color:#fff;display:flex;flex-direction:column;
+    position:sticky;top:0;height:100vh;
+  }
+  .brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.12);}
+  .brand-title{font-size:16px;font-weight:800;letter-spacing:.2px;}
+  .brand-sub{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;}
+  .nav{padding:14px 10px;flex:1;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:11px 12px;border-radius:8px;cursor:pointer;
+    font-size:13.5px;font-weight:600;color:rgba(255,255,255,.82);
+    margin-bottom:2px;transition:background .15s;
+  }
+  .nav-item:hover{background:rgba(255,255,255,.08);}
+  .nav-item.active{background:var(--coral);color:#fff;}
+  .nav-icon{font-size:15px;width:18px;text-align:center;}
+  .nav-badge{
+    margin-left:auto;background:rgba(255,255,255,.18);
+    font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;
+  }
+  .nav-item.active .nav-badge{background:rgba(255,255,255,.3);}
+  .sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,.12);}
+  .sidebar-footer a{color:rgba(255,255,255,.65);font-size:12px;text-decoration:none;}
+  .sidebar-footer a:hover{color:#fff;}
+
+  .main{flex:1;min-width:0;}
+  .topbar{
+    background:var(--card);border-bottom:1px solid var(--line);
+    padding:16px 28px;display:flex;align-items:center;justify-content:space-between;
+    position:sticky;top:0;z-index:5;
+  }
+  .topbar h1{font-size:18px;font-weight:800;}
+  .topbar .date{font-size:12.5px;color:var(--ink-soft);}
+  .content{padding:24px 28px;max-width:1200px;}
+  .page{display:none;}
+  .page.active{display:block;}
+
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;}
+  .stat-card .label{font-size:12px;color:var(--ink-soft);font-weight:600;margin-bottom:6px;}
+  .stat-card .value{font-size:26px;font-weight:800;color:var(--plum);}
+  .stat-card .value.small{font-size:15px;color:var(--ink);font-weight:700;}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px;}
+  .card h2{font-size:15px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .grid-2{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start;}
+
+  .form-group{margin-bottom:12px;}
+  .form-group label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:5px;}
+  input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;background:#fdfbfc;}
+  input:focus,select:focus{outline:none;border-color:var(--coral);}
+  .btn{padding:10px 16px;background:var(--coral);color:#fff;border:none;border-radius:7px;
+       cursor:pointer;font-weight:700;font-size:13.5px;width:100%;margin-top:6px;}
+  .btn:hover{background:var(--coral-light);}
+  .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink);}
+  small.hint{color:var(--ink-soft);font-size:11px;display:block;margin-top:3px;}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-size:11.5px;color:var(--ink-soft);font-weight:700;
+    padding:9px 10px;border-bottom:2px solid var(--line);white-space:nowrap;
+  }
+  tbody td{padding:10px;border-bottom:1px solid var(--line);}
+  tbody tr:hover{background:#fdf5f8;}
+  .tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+  .tag.active{background:#e6f7ee;color:var(--ok);}
+  .tag.checkin{background:#e6f7ee;color:var(--ok);}
+  .tag.checkout{background:#fdeceb;color:var(--warn);}
+  .del-btn{border:none;background:none;color:var(--warn);cursor:pointer;font-size:12px;font-weight:700;}
+  .empty{padding:30px;text-align:center;color:var(--ink-soft);font-size:13px;}
+
+  .toolbar{display:flex;gap:10px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;}
+  .toolbar .form-group{margin-bottom:0;min-width:160px;}
+
+  .soon{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:70px 20px;color:var(--ink-soft);text-align:center;gap:8px;
+  }
+  .soon .emoji{font-size:34px;}
+  .soon .t{font-weight:800;color:var(--ink);font-size:15px;}
+  .soon .d{font-size:12.5px;}
+
+  @media (max-width: 900px){
+    .sidebar{position:fixed;left:-220px;transition:left .2s;z-index:50;}
+    .sidebar.open{left:0;}
+    .grid-2{grid-template-columns:1fr;}
+    .stat-row{grid-template-columns:1fr 1fr;}
+    .menu-toggle{display:inline-block !important;}
+  }
+  .menu-toggle{display:none;background:none;border:none;font-size:20px;cursor:pointer;margin-right:10px;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <a href="/" class="back-link">← 출석 입력</a>
-        
-        <div class="header">
-            <h1>🎨 레이첼영어학원 관리</h1>
-        </div>
-        
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab(0)">👥 학생</button>
-            <button class="tab-btn" onclick="switchTab(1)">📋 출결</button>
-        </div>
-        
-        <div id="tab0" class="tab active">
-            <div class="grid-2">
-                <div class="card">
-                    <h2>➕ 학생 등록</h2>
-                    <div class="form-group">
-                        <label>이름 *</label>
-                        <input type="text" id="name">
-                    </div>
-                    <div class="form-group">
-                        <label>학년/반 *</label>
-                        <input type="text" id="grade">
-                    </div>
-                    <div class="form-group">
-                        <label>태블릿 번호 * (5자리)</label>
-                        <input type="text" id="pin" maxlength="5">
-                        <small style="color: #999;">예: 2331 → 23311</small>
-                    </div>
-                    <div class="form-group">
-                        <label>부모 전화</label>
-                        <input type="text" id="phone">
-                    </div>
-                    <div class="form-group">
-                        <label>부모 이름</label>
-                        <input type="text" id="pname">
-                    </div>
-                    <button class="btn" onclick="addStudent()">등록</button>
-                </div>
-                
-                <div class="card">
-                    <h2>👥 학생 목록 (<span id="count">0</span>)</h2>
-                    <div id="list"></div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="tab1" class="tab">
-            <div class="card">
-                <h2>출결 기록</h2>
-                <div class="form-group">
-                    <label>날짜</label>
-                    <input type="date" id="date">
-                </div>
-                <div class="form-group">
-                    <label>구분</label>
-                    <select id="mode">
-                        <option value="checkin">등원</option>
-                        <option value="checkout">하원</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="card">
-                <h2>기록</h2>
-                <div id="attList"></div>
-            </div>
-        </div>
+<div class="shell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-title">🎨 레이첼영어학원</div>
+      <div class="brand-sub">관리자 시스템</div>
     </div>
-    
-    <script>
-        const DB_URL = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
-        
-        function switchTab(n) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab' + n).classList.add('active');
-            event.target.classList.add('active');
-            
-            if (n === 1) loadAttendance();
-        }
-        
-        function addStudent() {
-            const name = document.getElementById('name').value.trim();
-            const grade = document.getElementById('grade').value.trim();
-            const pin = document.getElementById('pin').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const pname = document.getElementById('pname').value.trim();
-            
-            if (!name || !grade || !pin) {
-                alert('필수 항목을 입력하세요');
-                return;
-            }
-            
-            if (pin.length !== 5) {
-                alert('5자리여야 합니다');
-                return;
-            }
-            
-            fetch(DB_URL + '/students.json')
-                .then(res => res.json())
-                .then(data => {
-                    const students = data || {};
-                    for (let key in students) {
-                        if (students[key].pin === pin) {
-                            alert('이미 사용 중인 번호입니다');
-                            return;
-                        }
-                    }
-                    
-                    fetch(DB_URL + '/students.json', {
-                        method: 'POST',
-                        body: JSON.stringify({name, grade, pin, phone, pname})
-                    })
-                    .then(() => {
-                        document.getElementById('name').value = '';
-                        document.getElementById('grade').value = '';
-                        document.getElementById('pin').value = '';
-                        document.getElementById('phone').value = '';
-                        document.getElementById('pname').value = '';
-                        loadStudents();
-                        alert('등록되었습니다');
-                    });
-                });
-        }
-        
-        function loadStudents() {
-            fetch(DB_URL + '/students.json')
-                .then(res => res.json())
-                .then(data => {
-                    const students = data || {};
-                    document.getElementById('count').textContent = Object.keys(students).length;
-                    
-                    let html = '';
-                    for (let key in students) {
-                        const s = students[key];
-                        html += `<div class="student-item" onclick="deleteStudent('${key}')">
-                            <div class="student-name">${s.name}</div>
-                            <div class="student-detail">${s.grade} • ${s.pin}</div>
-                        </div>`;
-                    }
-                    
-                    document.getElementById('list').innerHTML = html || '<p style="color: #999;">등록된 학생이 없습니다</p>';
-                });
-        }
-        
-        function deleteStudent(key) {
-            if (!confirm('삭제하시겠습니까?')) return;
-            fetch(DB_URL + '/students/' + key + '.json', {method: 'DELETE'})
-                .then(() => loadStudents());
-        }
-        
-        function loadAttendance() {
-            const date = document.getElementById('date').value;
-            const mode = document.getElementById('mode').value;
-            
-            fetch(DB_URL + '/attendance/' + date + '.json')
-                .then(res => res.json())
-                .then(data => {
-                    const records = data || {};
-                    let html = '';
-                    
-                    for (let key in records) {
-                        const r = records[key];
-                        if (r.type === mode) {
-                            html += `<div class="student-item">
-                                <div class="student-name">${r.name}</div>
-                                <div class="student-detail">${r.time}</div>
-                            </div>`;
-                        }
-                    }
-                    
-                    document.getElementById('attList').innerHTML = html || '<p style="color: #999;">기록이 없습니다</p>';
-                });
-        }
-        
-        window.addEventListener('load', () => {
-            document.getElementById('date').valueAsDate = new Date();
-            document.getElementById('date').addEventListener('change', loadAttendance);
-            document.getElementById('mode').addEventListener('change', loadAttendance);
-            loadStudents();
-            loadAttendance();
+    <nav class="nav">
+      <div class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">📊</span><span>대시보드</span>
+      </div>
+      <div class="nav-item" data-page="students">
+        <span class="nav-icon">👥</span><span>학생 관리</span><span class="nav-badge" id="navCount">0</span>
+      </div>
+      <div class="nav-item" data-page="homework">
+        <span class="nav-icon">📝</span><span>숙제 관리</span>
+      </div>
+      <div class="nav-item" data-page="wordtest">
+        <span class="nav-icon">📄</span><span>단어 시험</span>
+      </div>
+      <div class="nav-item" data-page="attendance">
+        <span class="nav-icon">📋</span><span>출결 기록</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://leetin777.github.io/">← 출석 입력 화면</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h1 id="pageTitle">대시보드</h1>
+      </div>
+      <div class="date" id="todayDate"></div>
+    </div>
+
+    <div class="content">
+
+      <div class="page active" id="page-dashboard">
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="label">전체 학생</div>
+            <div class="value" id="statTotal">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">오늘 등원</div>
+            <div class="value" id="statCheckin">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">오늘 하원</div>
+            <div class="value" id="statCheckout">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">미등원</div>
+            <div class="value" id="statNotYet">0</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>👋 아직 등원하지 않은 학생</h2>
+          <div id="notYetList"><div class="empty">불러오는 중...</div></div>
+        </div>
+      </div>
+
+      <div class="page" id="page-students">
+        <div class="grid-2">
+          <div class="card">
+            <h2>➕ 학생 등록</h2>
+            <div class="form-group"><label>이름 *</label><input type="text" id="name"></div>
+            <div class="form-group"><label>학년/반 *</label><input type="text" id="grade"></div>
+            <div class="form-group">
+              <label>태블릿 번호 * (5자리)</label>
+              <input type="text" id="pin" maxlength="5">
+              <small class="hint">예: 2331 → 23311</small>
+            </div>
+            <div class="form-group"><label>부모 전화</label><input type="text" id="phone"></div>
+            <div class="form-group"><label>부모 이름</label><input type="text" id="pname"></div>
+            <button class="btn" onclick="addStudent()">등록</button>
+          </div>
+
+          <div class="card">
+            <h2>👥 학생 목록 (<span id="count">0</span>)</h2>
+            <table>
+              <thead>
+                <tr><th>이름</th><th>학년/반</th><th>번호</th><th>부모</th><th>연락처</th><th></th></tr>
+              </thead>
+              <tbody id="studentTable"></tbody>
+            </table>
+            <div id="studentEmpty" class="empty" style="display:none;">등록된 학생이 없습니다</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-homework">
+        <div class="card">
+          <div class="soon">
+            <div class="emoji">📝</div>
+            <div class="t">숙제 관리 기능 준비 중입니다</div>
+            <div class="d">Phase 2에서 개발 예정: 숙제 내용 / 제출 기한 / 대상 학생 입력</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-wordtest">
+        <div class="card">
+          <div class="soon">
+            <div class="emoji">📄</div>
+            <div class="t">단어 시험 기능 준비 중입니다</div>
+            <div class="d">Phase 2에서 개발 예정: 시험지 업로드 / 채점 / 학부모 앱 레포트</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="page" id="page-attendance">
+        <div class="card">
+          <div class="toolbar">
+            <div class="form-group"><label>날짜</label><input type="date" id="date"></div>
+            <div class="form-group">
+              <label>구분</label>
+              <select id="mode">
+                <option value="checkin">등원</option>
+                <option value="checkout">하원</option>
+              </select>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>이름</th><th>구분</th><th>시간</th></tr></thead>
+            <tbody id="attTable"></tbody>
+          </table>
+          <div id="attEmpty" class="empty" style="display:none;">기록이 없습니다</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const DB_URL = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
+let studentsCache = {};
+
+const pageTitles = {
+  dashboard: '대시보드', students: '학생 관리', homework: '숙제 관리',
+  wordtest: '단어 시험', attendance: '출결 기록'
+};
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    const key = item.dataset.page;
+    document.getElementById('page-' + key).classList.add('active');
+    document.getElementById('pageTitle').textContent = pageTitles[key];
+    if (key === 'attendance') loadAttendance();
+    if (key === 'dashboard') loadDashboard();
+    document.getElementById('sidebar').classList.remove('open');
+  });
+});
+document.getElementById('menuToggle').addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+function addStudent() {
+  const name = document.getElementById('name').value.trim();
+  const grade = document.getElementById('grade').value.trim();
+  const pin = document.getElementById('pin').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const pname = document.getElementById('pname').value.trim();
+
+  if (!name || !grade || !pin) { alert('필수 항목을 입력하세요'); return; }
+  if (pin.length !== 5) { alert('5자리여야 합니다'); return; }
+
+  fetch(DB_URL + '/students.json')
+    .then(res => res.json())
+    .then(data => {
+      const students = data || {};
+      for (let key in students) {
+        if (students[key].pin === pin) { alert('이미 사용 중인 번호입니다'); return; }
+      }
+      fetch(DB_URL + '/students.json', { method: 'POST', body: JSON.stringify({name, grade, pin, phone, pname}) })
+        .then(() => {
+          ['name','grade','pin','phone','pname'].forEach(id => document.getElementById(id).value = '');
+          loadStudents();
+          alert('등록되었습니다');
         });
-    </script>
+    });
+}
+
+function loadStudents() {
+  return fetch(DB_URL + '/students.json')
+    .then(res => res.json())
+    .then(data => {
+      const students = data || {};
+      studentsCache = students;
+      const count = Object.keys(students).length;
+      document.getElementById('count').textContent = count;
+      document.getElementById('navCount').textContent = count;
+      document.getElementById('statTotal').textContent = count;
+
+      let rows = '';
+      for (let key in students) {
+        const s = students[key];
+        rows += `<tr>
+          <td><strong>${s.name}</strong></td>
+          <td>${s.grade || '-'}</td>
+          <td>${s.pin}</td>
+          <td>${s.pname || '-'}</td>
+          <td>${s.phone || '-'}</td>
+          <td><button class="del-btn" onclick="deleteStudent('${key}')">삭제</button></td>
+        </tr>`;
+      }
+      document.getElementById('studentTable').innerHTML = rows;
+      document.getElementById('studentEmpty').style.display = rows ? 'none' : 'block';
+      return students;
+    });
+}
+
+function deleteStudent(key) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  fetch(DB_URL + '/students/' + key + '.json', { method: 'DELETE' }).then(() => { loadStudents(); loadDashboard(); });
+}
+
+function loadAttendance() {
+  const date = document.getElementById('date').value;
+  const mode = document.getElementById('mode').value;
+
+  fetch(DB_URL + '/attendance/' + date + '.json')
+    .then(res => res.json())
+    .then(data => {
+      const records = data || {};
+      let rows = '';
+      for (let key in records) {
+        const r = records[key];
+        if (r.type === mode) {
+          rows += `<tr>
+            <td><strong>${r.name}</strong></td>
+            <td><span class="tag ${r.type}">${r.type === 'checkin' ? '등원' : '하원'}</span></td>
+            <td>${r.time}</td>
+          </tr>`;
+        }
+      }
+      document.getElementById('attTable').innerHTML = rows;
+      document.getElementById('attEmpty').style.display = rows ? 'none' : 'block';
+    });
+}
+
+function loadDashboard() {
+  const today = new Date().toISOString().slice(0,10);
+  Promise.all([
+    loadStudents(),
+    fetch(DB_URL + '/attendance/' + today + '.json').then(r => r.json())
+  ]).then(([students, attData]) => {
+    const records = attData || {};
+    const checkedIn = new Set(), checkedOut = new Set();
+    for (let key in records) {
+      const r = records[key];
+      if (r.type === 'checkin') checkedIn.add(r.name);
+      if (r.type === 'checkout') checkedOut.add(r.name);
+    }
+    document.getElementById('statCheckin').textContent = checkedIn.size;
+    document.getElementById('statCheckout').textContent = checkedOut.size;
+
+    const allNames = Object.values(students).map(s => s.name);
+    const notYet = allNames.filter(n => !checkedIn.has(n));
+    document.getElementById('statNotYet').textContent = notYet.length;
+
+    document.getElementById('notYetList').innerHTML = notYet.length
+      ? notYet.map(n => `<span class="tag checkout" style="margin:3px;display:inline-block;">${n}</span>`).join('')
+      : '<div class="empty">모든 학생이 등원했습니다 🎉</div>';
+  });
+}
+
+window.addEventListener('load', () => {
+  document.getElementById('date').valueAsDate = new Date();
+  document.getElementById('date').addEventListener('change', loadAttendance);
+  document.getElementById('mode').addEventListener('change', loadAttendance);
+  document.getElementById('todayDate').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+  loadDashboard();
+});
+</script>
 </body>
 </html>
