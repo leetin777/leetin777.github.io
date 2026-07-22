@@ -119,24 +119,93 @@
         .btn-submit.checkout:hover {
             box-shadow: 0 10px 25px rgba(108, 117, 125, 0.4);
         }
-        .message {
-            text-align: center;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 8px;
+        
+        /* 모달창 스타일 */
+        .modal {
             display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            animation: slideUp 0.3s;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal-icon {
+            font-size: 60px;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+        }
+        
+        .modal-subtext {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .modal-time {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-modal-close {
+            padding: 15px 40px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8c 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
             font-weight: 600;
         }
-        .message.success {
-            background: #d4edda;
-            color: #155724;
-            display: block;
+        
+        .btn-modal-close:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 58, 138, 0.3);
         }
-        .message.error {
-            background: #f8d7da;
-            color: #721c24;
-            display: block;
-        }
+        
         .admin-link {
             text-align: center;
             margin-top: 1.5rem;
@@ -165,6 +234,12 @@
             .display {
                 font-size: 36px;
                 letter-spacing: 4px;
+            }
+            .modal-content {
+                padding: 30px;
+            }
+            .modal-text {
+                font-size: 24px;
             }
         }
     </style>
@@ -197,10 +272,19 @@
             <button class="btn-submit checkout" id="submitBtn2" onclick="submitAttendance('checkout')">하원</button>
         </div>
         
-        <div class="message" id="message"></div>
-        
         <div class="admin-link">
             <a href="/admin/">🔐 관리자</a>
+        </div>
+    </div>
+    
+    <!-- 모달창 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modalIcon">✓</div>
+            <div class="modal-text" id="modalText">김은석</div>
+            <div class="modal-subtext" id="modalSubtext">님이 등원하였습니다</div>
+            <div class="modal-time" id="modalTime">14:30</div>
+            <button class="btn-modal-close" onclick="closeModal()">확인</button>
         </div>
     </div>
     
@@ -221,7 +305,6 @@
                 phone += n;
                 updateDisplay();
                 
-                // 4자리 다 입력되면 자동 인식
                 if (phone.length === 4) {
                     checkPhoneAuto();
                 }
@@ -240,20 +323,20 @@
         
         function checkPhoneAuto() {
             loadStudents();
-            currentStudent = students.find(s => s.phone.endsWith(phone));
+            currentStudent = students.find(s => s.pinCode === phone);
             
             if (currentStudent) {
                 document.getElementById('display').textContent = currentStudent.name;
                 document.getElementById('display').style.fontSize = '32px';
             } else {
-                showMessage('등록되지 않은 번호입니다', 'error');
+                showError('등록되지 않은 번호입니다');
                 reset();
             }
         }
         
         function submitAttendance(type) {
             if (!currentStudent) {
-                showMessage('먼저 번호를 입력하세요', 'error');
+                showError('먼저 번호를 입력하세요');
                 return;
             }
             
@@ -275,12 +358,21 @@
             
             localStorage.setItem('acad-attendance', JSON.stringify(attendance));
             
+            // 모달창 표시
+            showModal(currentStudent.name, type, time);
+        }
+        
+        function showModal(name, type, time) {
             const typeText = type === 'checkin' ? '등원' : '하원';
-            showMessage(`✓ ${currentStudent.name} 학생 ${typeText} 확인!`, 'success');
-            
-            setTimeout(() => {
-                reset();
-            }, 2000);
+            document.getElementById('modalText').textContent = name;
+            document.getElementById('modalSubtext').textContent = `님이 ${typeText}하였습니다`;
+            document.getElementById('modalTime').textContent = time;
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+            reset();
         }
         
         function reset() {
@@ -288,13 +380,10 @@
             currentStudent = null;
             updateDisplay();
             document.getElementById('display').style.fontSize = '48px';
-            document.getElementById('message').style.display = 'none';
         }
         
-        function showMessage(msg, type) {
-            const msgEl = document.getElementById('message');
-            msgEl.textContent = msg;
-            msgEl.className = 'message ' + type;
+        function showError(msg) {
+            alert(msg);
         }
         
         window.addEventListener('load', () => {
