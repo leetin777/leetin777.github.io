@@ -233,7 +233,7 @@
             <div class="form-group">
               <label>출결코드 * (5자리)</label>
               <input type="text" id="pin" maxlength="5">
-              <small class="hint">예: 2331 → 23311</small>
+              <small class="hint">직접 입력 (4~5자리)</small>
             </div>
             <div class="form-group"><label>부모 전화</label><input type="text" id="phone"></div>
             <div class="form-group"><label>부모 이름</label><input type="text" id="pname"></div>
@@ -242,7 +242,10 @@
 
           <div class="card">
             <h2>👥 학생 목록 (<span id="count">0</span>)</h2>
-            <button class="btn ghost sm" style="margin-bottom:10px;color:var(--warn);border-color:var(--warn);" onclick="deleteAllStudents()">🗑️ 전체 학생 삭제</button>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+              <button class="btn ghost sm" style="color:var(--warn);border-color:var(--warn);" onclick="deleteAllStudents()">🗑️ 전체 학생 삭제</button>
+              <button class="btn ghost sm" onclick="fixPhoneNumbers()">📞 전화번호 0 복구</button>
+            </div>
             <table>
               <thead>
                 <tr><th>이름</th><th>학교</th><th>학년</th><th>출결코드</th><th>부모</th><th>연락처</th><th>클래스</th><th></th></tr>
@@ -264,7 +267,7 @@
           <div id="bulkTabPaste">
             <small class="hint" style="margin-bottom:10px;display:block;">
               엑셀에서 <strong>이름 · 학교 · 학년 · 부모전화 · 부모이름</strong> 순서로 5개 열을 선택해 복사한 후 아래 칸에 붙여넣으세요.
-              (탭으로 구분되어 자동 인식됩니다 / 출결코드는 자동 생성됩니다)
+              (탭으로 구분되어 자동 인식됩니다 / 출결코드는 부모 전화번호 뒷 4자리로 자동 생성됩니다)
             </small>
             <textarea id="bulkText" rows="6" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;" placeholder="김민준	하길초	초3	01012345678	김영희&#10;이서연	화원초	초5	01023456789	이철수"></textarea>
             <button class="btn ghost" style="margin-top:10px;" onclick="previewBulk()">미리보기</button>
@@ -368,7 +371,7 @@
 </div>
 
 <!-- ===== Student Detail Modal ===== -->
-<div class="modal-overlay" id="studentModal" onclick="if(event.target===this) closeStudentModal()">
+<div class="modal-overlay" id="studentModal">
   <div class="modal-box">
     <h2>
       <span>👤 학생 정보</span>
@@ -428,7 +431,7 @@ function addStudent() {
   const pname = document.getElementById('pname').value.trim();
 
   if (!name || !school || !grade || !pin) { alert('필수 항목을 입력하세요'); return; }
-  if (pin.length !== 5) { alert('5자리여야 합니다'); return; }
+  if (pin.length !== 4 && pin.length !== 5) { alert('출결코드는 4자리 또는 5자리여야 합니다'); return; }
 
   fetch(DB_URL + '/students.json')
     .then(res => res.json())
@@ -517,6 +520,32 @@ function deleteAllStudents() {
     });
 }
 
+async function fixPhoneNumbers() {
+  const targets = [];
+  for (let key in studentsCache) {
+    const s = studentsCache[key];
+    const phone = (s.phone || '').toString().trim();
+    // 10자리 숫자이고 0으로 시작하지 않으면 앞에 0을 붙여야 하는 대상
+    if (/^\d{10}$/.test(phone) && !phone.startsWith('0')) {
+      targets.push({ key, oldPhone: phone, newPhone: '0' + phone });
+    }
+  }
+
+  if (targets.length === 0) { alert('고칠 전화번호가 없습니다. (모두 정상이거나 형식이 다릅니다)'); return; }
+
+  if (!confirm(`${targets.length}명의 전화번호 앞에 0을 붙이겠습니다.\n예: ${targets[0].oldPhone} → ${targets[0].newPhone}\n계속할까요?`)) return;
+
+  for (const t of targets) {
+    await fetch(DB_URL + '/students/' + t.key + '/phone.json', {
+      method: 'PUT',
+      body: JSON.stringify(t.newPhone)
+    });
+  }
+
+  alert(`${targets.length}명의 전화번호를 복구했습니다`);
+  loadStudents();
+}
+
 /* ---------- Student detail modal ---------- */
 let currentModalKey = null;
 
@@ -563,7 +592,7 @@ function saveStudentModal() {
   const className = document.getElementById('m_className').value;
 
   if (!name || !school || !grade || !pin) { alert('이름/학교/학년/출결코드는 필수입니다'); return; }
-  if (pin.length !== 5) { alert('출결코드는 5자리여야 합니다'); return; }
+  if (pin.length !== 4 && pin.length !== 5) { alert('출결코드는 4자리 또는 5자리여야 합니다'); return; }
 
   const payload = { name, school, grade, pin, pname, phone };
   if (className) payload.className = className;
@@ -591,10 +620,20 @@ function switchBulkTab(tab) {
   document.getElementById('tabFileBtn').classList.toggle('ghost', tab !== 'file');
 }
 
-function generateUniquePin(usedPins) {
+function generateUniquePin(usedPins, phone) {
+  // 부모 전화번호 뒷자리 4자리를 우선 사용
+  const digits = (phone || '').replace(/\D/g, '');
+  let base = digits.length >= 4 ? digits.slice(-4) : '';
+
+  if (base && !usedPins.has(base)) {
+    usedPins.add(base);
+    return base;
+  }
+
+  // 전화번호가 없거나 이미 사용 중이면 랜덤 4자리로 대체
   let pin;
   do {
-    pin = String(Math.floor(10000 + Math.random() * 90000));
+    pin = String(Math.floor(1000 + Math.random() * 9000));
   } while (usedPins.has(pin));
   usedPins.add(pin);
   return pin;
@@ -612,7 +651,7 @@ function buildBulkRow(name, school, grade, phone, pname, usedPins, existingNames
   if (!name || !school || !grade) { status = 'error'; note = '이름/학교/학년 누락'; }
   else if (existingNames.has(name)) { status = 'warn'; note = '이미 있는 이름 (중복 등록 주의)'; }
 
-  const pin = (status !== 'error') ? generateUniquePin(usedPins) : '';
+  const pin = (status !== 'error') ? generateUniquePin(usedPins, phone) : '';
   return { name, school, grade, phone, pname, pin, status, note };
 }
 
