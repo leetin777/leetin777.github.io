@@ -8,8 +8,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
         
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
-            font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-family: 'Fredoka', sans-serif;
             background: #f5f5f5;
             padding: 20px;
             display: flex;
@@ -34,8 +35,6 @@
             font-weight: 700;
             color: #ff6b9d;
             margin-bottom: 5px;
-            font-family: 'Fredoka', sans-serif;
-            letter-spacing: 1px;
         }
         .subtitle {
             font-size: 16px;
@@ -91,6 +90,8 @@
             transition: all 0.2s;
             color: #333;
             font-family: 'Fredoka', sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .btn:hover {
             background: #f5f5f5;
@@ -129,10 +130,15 @@
             font-weight: 600;
             transition: all 0.3s;
             font-family: 'Fredoka', sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .btn-submit:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 25px rgba(255, 107, 157, 0.4);
+        }
+        .btn-submit:active {
+            transform: translateY(-1px);
         }
         .btn-submit.checkout {
             background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
@@ -175,7 +181,6 @@
             font-weight: 700;
             color: #ff6b9d;
             margin-bottom: 0.5rem;
-            font-family: 'Fredoka', sans-serif;
         }
         .modal-subtext {
             font-size: 18px;
@@ -223,7 +228,7 @@
         
         <div class="info-box">
             <div class="info-title">📝 입력 방법</div>
-          첫째: 부모님 뒷자리 + 1<br>
+            첫째: 부모님 뒷자리 + 1<br>
             예) 2331 → <strong>23311</strong><br><br>
             둘째: 부모님 뒷자리 + 2<br>
             예) 2331 → <strong>23312</strong><br><br>
@@ -233,23 +238,23 @@
         
         <div class="display" id="display">•••••</div>
         
-        <div class="keypad">
-            <button class="btn" onclick="addNumber('1')">1</button>
-            <button class="btn" onclick="addNumber('2')">2</button>
-            <button class="btn" onclick="addNumber('3')">3</button>
-            <button class="btn" onclick="addNumber('4')">4</button>
-            <button class="btn" onclick="addNumber('5')">5</button>
-            <button class="btn" onclick="addNumber('6')">6</button>
-            <button class="btn" onclick="addNumber('7')">7</button>
-            <button class="btn" onclick="addNumber('8')">8</button>
-            <button class="btn" onclick="addNumber('9')">9</button>
-            <button class="btn btn-zero" onclick="addNumber('0')">0</button>
-            <button class="btn btn-delete" onclick="deleteNumber()">지우기</button>
+        <div class="keypad" id="keypad">
+            <button class="btn" data-num="1">1</button>
+            <button class="btn" data-num="2">2</button>
+            <button class="btn" data-num="3">3</button>
+            <button class="btn" data-num="4">4</button>
+            <button class="btn" data-num="5">5</button>
+            <button class="btn" data-num="6">6</button>
+            <button class="btn" data-num="7">7</button>
+            <button class="btn" data-num="8">8</button>
+            <button class="btn" data-num="9">9</button>
+            <button class="btn btn-zero" data-num="0">0</button>
+            <button class="btn btn-delete" id="deleteBtn">지우기</button>
         </div>
         
         <div class="actions">
-            <button class="btn-submit" onclick="submitAttendance('checkin')">등원</button>
-            <button class="btn-submit checkout" onclick="submitAttendance('checkout')">하원</button>
+            <button class="btn-submit" id="checkinBtn">등원</button>
+            <button class="btn-submit checkout" id="checkoutBtn">하원</button>
         </div>
         
         <div class="admin-link">
@@ -263,7 +268,7 @@
             <div class="modal-text" id="modalText">김은석</div>
             <div class="modal-subtext" id="modalSubtext">님이 등원하였습니다</div>
             <div class="modal-time" id="modalTime">14:30</div>
-            <button class="btn-modal-close" onclick="closeModal()">확인</button>
+            <button class="btn-modal-close" id="modalCloseBtn">확인</button>
         </div>
     </div>
     
@@ -274,20 +279,13 @@
         
         function loadStudents() {
             const data = localStorage.getItem('acad-students');
-            if (data) students = JSON.parse(data);
-        }
-        
-        function addNumber(n) {
-            if (phone.length < 5) {
-                phone += n;
-                updateDisplay();
-                if (phone.length === 5) checkPhoneAuto();
+            if (data) {
+                try {
+                    students = JSON.parse(data);
+                } catch(e) {
+                    students = [];
+                }
             }
-        }
-        
-        function deleteNumber() {
-            phone = phone.slice(0, -1);
-            updateDisplay();
         }
         
         function updateDisplay() {
@@ -346,3 +344,55 @@
         function reset() {
             phone = '';
             currentStudent = null;
+            updateDisplay();
+            document.getElementById('display').style.fontSize = '48px';
+        }
+        
+        // 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStudents();
+            updateDisplay();
+            
+            // 숫자 버튼
+            document.querySelectorAll('.btn[data-num]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const num = this.getAttribute('data-num');
+                    if (phone.length < 5) {
+                        phone += num;
+                        updateDisplay();
+                        if (phone.length === 5) {
+                            setTimeout(checkPhoneAuto, 300);
+                        }
+                    }
+                });
+            });
+            
+            // 지우기 버튼
+            document.getElementById('deleteBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                phone = phone.slice(0, -1);
+                updateDisplay();
+            });
+            
+            // 등원 버튼
+            document.getElementById('checkinBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                submitAttendance('checkin');
+            });
+            
+            // 하원 버튼
+            document.getElementById('checkoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                submitAttendance('checkout');
+            });
+            
+            // 모달 닫기
+            document.getElementById('modalCloseBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                closeModal();
+            });
+        });
+    </script>
+</body>
+</html>
