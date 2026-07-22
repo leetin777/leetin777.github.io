@@ -56,18 +56,20 @@
         <div class="admin">
     <a href="#" onclick="goAdmin()">🔐 관리자</a>
 </div>
+<div class="admin">
+    <a href="#" onclick="goAdmin()">🔐 관리자</a>
+</div>
 
 <script>
 function goAdmin() {
     const pass = prompt('관리자 비번을 입력하세요:');
-    if (pass === '1234') {  // 비번: 1234로 설정
+    if (pass === '1234') {
         window.location.href = '/admin/';
     } else {
         alert('비번이 틀렸습니다');
     }
 }
-</script>
-       
+</script>     
     </div>
     
     <div class="modal" id="modal">
