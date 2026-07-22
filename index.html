@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학원 출석</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .school-name {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        .display {
+            background: #f0f0f0;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 48px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            letter-spacing: 8px;
+            color: #333;
+        }
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            padding: 40px;
+            font-size: 28px;
+            font-weight: 700;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333;
+        }
+        .btn:hover {
+            background: #f5f5f5;
+            border-color: #1e3a8a;
+            transform: scale(1.05);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-zero {
+            grid-column: 1;
+        }
+        .btn-delete {
+            grid-column: 2;
+            background: #fff3cd;
+            border-color: #ffc107;
+            font-size: 20px;
+        }
+        .btn-delete:hover {
+            background: #ffe69c;
+        }
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+        .btn-submit {
+            padding: 20px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8c 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(30, 58, 138, 0.4);
+        }
+        .btn-submit.checkout {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+            animation: slideUp 0.3s;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-icon {
+            font-size: 60px;
+            margin-bottom: 1rem;
+        }
+        .modal-text {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+        }
+        .modal-subtext {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        .modal-time {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 2rem;
+        }
+        .btn-modal-close {
+            padding: 15px 40px;
+            font-size: 16px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #2d5a8c 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .admin-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+        .admin-link a {
+            font-size: 12px;
+            color: #999;
+            text-decoration: none;
+        }
+        .admin-link a:hover {
+            color: #1e3a8a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="school-name">레이첼영어학원</div>
+            <div class="subtitle">부모님 전화 뒷자리 4개</div>
+        </div>
+        
+        <div class="display" id="display">••••</div>
+        
+        <div class="keypad">
+            <button class="btn" onclick="addNumber('1')">1</button>
+            <button class="btn" onclick="addNumber('2')">2</button>
+            <button class="btn" onclick="addNumber('3')">3</button>
+            <button class="btn" onclick="addNumber('4')">4</button>
+            <button class="btn" onclick="addNumber('5')">5</button>
+            <button class="btn" onclick="addNumber('6')">6</button>
+            <button class="btn" onclick="addNumber('7')">7</button>
+            <button class="btn" onclick="addNumber('8')">8</button>
+            <button class="btn" onclick="addNumber('9')">9</button>
+            <button class="btn btn-zero" onclick="addNumber('0')">0</button>
+            <button class="btn btn-delete" onclick="deleteNumber()">지우기</button>
+        </div>
+        
+        <div class="actions">
+            <button class="btn-submit" onclick="submitAttendance('checkin')">등원</button>
+            <button class="btn-submit checkout" onclick="submitAttendance('checkout')">하원</button>
+        </div>
+        
+        <div class="admin-link">
+            <a href="/admin/">🔐 관리자</a>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">✓</div>
+            <div class="modal-text" id="modalText">김은석</div>
+            <div class="modal-subtext" id="modalSubtext">님이 등원하였습니다</div>
+            <div class="modal-time" id="modalTime">14:30</div>
+            <button class="btn-modal-close" onclick="closeModal()">확인</button>
+        </div>
+    </div>
+    
+    <script>
+        let phone = '';
+        let currentStudent = null;
+        let students = [];
+        
+        function loadStudents() {
+            const data = localStorage.getItem('acad-students');
+            if (data) students = JSON.parse(data);
+        }
+        
+        function addNumber(n) {
+            if (phone.length < 4) {
+                phone += n;
+                updateDisplay();
+                if (phone.length === 4) checkPhoneAuto();
+            }
+        }
+        
+        function deleteNumber() {
+            phone = phone.slice(0, -1);
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            const masked = phone.padEnd(4, '•');
+            document.getElementById('display').textContent = masked.split('').join(' ');
+        }
+        
+        function checkPhoneAuto() {
+            loadStudents();
+            currentStudent = students.find(s => s.pinCode === phone);
+            if (currentStudent) {
+                document.getElementById('display').textContent = currentStudent.name;
+                document.getElementById('display').style.fontSize = '32px';
+            } else {
+                alert('등록되지 않은 번호입니다');
+                reset();
+            }
+        }
+        
+        function submitAttendance(type) {
+            if (!currentStudent) {
+                alert('먼저 번호를 입력하세요');
+                return;
+            }
+            
+            const today = new Date().toISOString().split('T')[0];
+            let attendance = JSON.parse(localStorage.getItem('acad-attendance') || '{}');
+            if (!attendance[today]) attendance[today] = [];
+            
+            const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            attendance[today].push({
+                id: Date.now().toString(),
+                studentId: currentStudent.id,
+                name: currentStudent.name,
+                type: type,
+                time
+            });
+            
+            localStorage.setItem('acad-attendance', JSON.stringify(attendance));
+            showModal(currentStudent.name, type, time);
+        }
+        
+        function showModal(name, type, time) {
+            const typeText = type === 'checkin' ? '등원' : '하원';
+            document.getElementById('modalText').textContent = name;
+            document.getElementById('modalSubtext').textContent = `님이 ${typeText}하였습니다`;
+            document.getElementById('modalTime').textContent = time;
+            document.getElementById('modal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('show');
+            reset();
+        }
+        
+        function reset() {
+            phone = '';
+            currentStudent = null;
+            updateDisplay();
+            document.getElementById('display').style.fontSize = '48px';
+        }
+        
+        window.addEventListener('load', () => {
+            loadStudents();
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
