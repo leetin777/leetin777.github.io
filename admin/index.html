@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학원 관리</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #ff6b9d 0%, #ff8fab 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .header h1 { color: #ff6b9d; font-size: 28px; }
+        .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { padding: 10px; background: white; border: 2px solid #ddd; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .tab-btn.active { background: #ff6b9d; color: white; border: none; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .card h2 { font-size: 18px; margin-bottom: 15px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn { width: 100%; padding: 10px; background: #ff6b9d; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .student-item { background: #f5f5f5; padding: 15px; border-left: 4px solid #ff6b9d; margin-bottom: 10px; cursor: pointer; border-radius: 5px; }
+        .student-item:hover { background: #e9ecef; }
+        .student-name { font-weight: bold; margin-bottom: 5px; }
+        .student-detail { font-size: 12px; color: #666; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .back-link { color: white; text-decoration: none; font-size: 14px; display: block; margin-bottom: 20px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← 출석 입력</a>
+        
+        <div class="header">
+            <h1>🎨 레이첼영어학원 관리</h1>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(0)">👥 학생</button>
+            <button class="tab-btn" onclick="switchTab(1)">📋 출결</button>
+        </div>
+        
+        <div id="tab0" class="tab active">
+            <div class="grid-2">
+                <div class="card">
+                    <h2>➕ 학생 등록</h2>
+                    <div class="form-group">
+                        <label>이름 *</label>
+                        <input type="text" id="name">
+                    </div>
+                    <div class="form-group">
+                        <label>학년/반 *</label>
+                        <input type="text" id="grade">
+                    </div>
+                    <div class="form-group">
+                        <label>태블릿 번호 * (5자리)</label>
+                        <input type="text" id="pin" maxlength="5">
+                        <small style="color: #999;">예: 2331 → 23311</small>
+                    </div>
+                    <div class="form-group">
+                        <label>부모 전화</label>
+                        <input type="text" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label>부모 이름</label>
+                        <input type="text" id="pname">
+                    </div>
+                    <button class="btn" onclick="addStudent()">등록</button>
+                </div>
+                
+                <div class="card">
+                    <h2>👥 학생 목록 (<span id="count">0</span>)</h2>
+                    <div id="list"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tab1" class="tab">
+            <div class="card">
+                <h2>출결 기록</h2>
+                <div class="form-group">
+                    <label>날짜</label>
+                    <input type="date" id="date">
+                </div>
+                <div class="form-group">
+                    <label>구분</label>
+                    <select id="mode">
+                        <option value="checkin">등원</option>
+                        <option value="checkout">하원</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 id="attTitle">기록</h2>
+                <div id="attList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(n) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab' + n).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (n === 1) loadAttendance();
+        }
+        
+        function addStudent() {
+            const name = document.getElementById('name').value.trim();
+            const grade = document.getElementById('grade').value.trim();
+            const pin = document.getElementById('pin').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const pname = document.getElementById('pname').value.trim();
+            
+            if (!name || !grade || !pin) {
+                alert('필수 항목을 입력하세요');
+                return;
+            }
+            
+            if (pin.length !== 5) {
+                alert('5자리여야 합니다');
+                return;
+            }
+            
+            const students = JSON.parse(localStorage.getItem('students') || '[]');
+            if (students.find(s => s.pin === pin)) {
+                alert('이미 사용 중인 번호입니다');
+                return;
+            }
+            
+            students.push({ id: Date.now(), name, grade, pin, phone, pname });
+            localStorage.setItem('students', JSON.stringify(students));
+            
+            document.getElementById('name').value = '';
+            document.getElementById('grade').value = '';
+            document.getElementById('pin').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('pname').value = '';
+            
+            loadStudents();
+            alert('등록되었습니다');
+        }
+        
+        function loadStudents() {
+            const students = JSON.parse(localStorage.getItem('students') || '[]');
+            document.getElementById('count').textContent = students.length;
+            
+            let html = '';
+            students.forEach(s => {
+                html += `<div class="student-item" onclick="deleteStudent(${s.id})">
+                    <div class="student-name">${s.name}</div>
+                    <div class="student-detail">${s.grade} • ${s.pin}</div>
+                </div>`;
+            });
+            
+            document.getElementById('list').innerHTML = html || '<p style="color: #999;">등록된 학생이 없습니다</p>';
+        }
+        
+        function deleteStudent(id) {
+            if (!confirm('삭제하시겠습니까?')) return;
+            let students = JSON.parse(localStorage.getItem('students') || '[]');
+            students = students.filter(s => s.id !== id);
+            localStorage.setItem('students', JSON.stringify(students));
+            loadStudents();
+        }
+        
+        function loadAttendance() {
+            const date = document.getElementById('date').value;
+            const mode = document.getElementById('mode').value;
+            const att = JSON.parse(localStorage.getItem('attendance') || '{}');
+            const records = (att[date] || []).filter(r => r.type === mode);
+            
+            let html = '';
+            records.forEach(r => {
+                html += `<div class="student-item">
+                    <div class="student-name">${r.name}</div>
+                    <div class="student-detail">${r.time}</div>
+                </div>`;
+            });
+            
+            document.getElementById('attList').innerHTML = html || '<p style="color: #999;">기록이 없습니다</p>';
+        }
+        
+        window.addEventListener('load', () => {
+            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('date').addEventListener('change', loadAttendance);
+            document.getElementById('mode').addEventListener('change', loadAttendance);
+            loadStudents();
+            loadAttendance();
+        });
+    </script>
+</body>
+</html>
