@@ -6,76 +6,133 @@
     <title>학원 출석</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; text-align: center; }
-        .container { background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto; }
-        h1 { color: #ff6b9d; font-size: 36px; margin-bottom: 20px; }
-        .display { background: #f0f0f0; padding: 20px; font-size: 40px; margin: 20px 0; border-radius: 10px; }
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 20px 0; }
-        button { padding: 15px; font-size: 18px; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer; }
+        html, body { height: 100%; }
+        body {
+            font-family: Arial, sans-serif; background: #f5f5f5;
+            padding: 2vh 2vw; min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .page-wrap {
+            display: flex; gap: 2.5vw; width: 100%; max-width: 1400px; height: 94vh;
+            align-items: stretch; flex-wrap: wrap; justify-content: center;
+        }
+
+        .container {
+            background: white; padding: 3vh 3vw; border-radius: 16px; flex: 1 1 560px; max-width: 680px;
+            text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center;
+        }
+        h1 { color: #ff6b9d; font-size: clamp(32px, 4vw, 52px); margin-bottom: 1.5vh; }
+        .container > p { font-size: clamp(16px, 1.6vw, 22px); color: #666; }
+
+        .guide-box { background: #fff5f8; border: 2px dashed #ffb8cf; border-radius: 12px; padding: 1.8vh 1.6vw; margin-bottom: 1.5vh; text-align: left; }
+        .guide-title { color: #ff6b9d; font-weight: bold; font-size: clamp(15px, 1.6vw, 19px); margin-bottom: 1vh; text-align: center; }
+        .guide-row { display: flex; align-items: center; gap: 10px; padding: 0.7vh 0; font-size: clamp(14px, 1.4vw, 18px); color: #444; }
+        .guide-order { flex-shrink: 0; width: 2.2em; height: 2.2em; border-radius: 50%; background: #ff6b9d; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: clamp(13px, 1.3vw, 16px); }
+        .guide-text { flex: 1; }
+        .guide-example { color: #ff6b9d; font-weight: bold; }
+        .display { background: #f0f0f0; padding: 3vh 2vw; font-size: clamp(40px, 5vw, 64px); margin: 2.5vh 0; border-radius: 14px; letter-spacing: 4px; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vh 1.2vw; margin: 2.5vh 0; }
+        button { padding: 2.6vh 0; font-size: clamp(20px, 2.4vw, 30px); border: 2px solid #ddd; background: white; border-radius: 10px; cursor: pointer; }
         button:hover { background: #f0f0f0; }
         button:active { transform: scale(0.95); }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .btn-submit { padding: 15px; background: #ff6b9d; color: white; border: none; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 5px; }
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vw; margin: 2.5vh 0; }
+        .btn-submit { padding: 2.8vh 0; background: #ff6b9d; color: white; border: none; font-size: clamp(20px, 2.4vw, 28px); font-weight: bold; cursor: pointer; border-radius: 10px; }
         .btn-submit:hover { background: #ff5a8b; }
-        .admin { margin-top: 20px; }
-        .admin button { width: 100%; padding: 10px; background: #999; color: white; font-weight: bold; }
+        .admin { margin-top: 2.5vh; }
+        .admin button { width: 100%; padding: 1.8vh 0; background: #999; color: white; font-weight: bold; font-size: clamp(16px, 1.6vw, 20px); }
         .admin button:hover { background: #777; }
+
         .modal { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
         .modal.show { display: flex; }
-        .modal-box { background: white; padding: 50px; border-radius: 20px; text-align: center; min-width: 400px; }
-        .modal-icon { font-size: 80px; margin-bottom: 20px; }
-        .modal-name { font-size: 48px; font-weight: bold; color: #ff6b9d; margin-bottom: 20px; }
-        .modal-text { font-size: 36px; color: #333; margin-bottom: 20px; line-height: 1.4; }
-        .modal-time { font-size: 24px; color: #999; }
+        .modal-box { background: white; padding: 5vh 5vw; border-radius: 24px; text-align: center; min-width: 400px; }
+        .modal-icon { font-size: clamp(60px, 8vw, 100px); margin-bottom: 2vh; }
+        .modal-name { font-size: clamp(36px, 5vw, 60px); font-weight: bold; color: #ff6b9d; margin-bottom: 2vh; }
+        .modal-text { font-size: clamp(26px, 3.6vw, 44px); color: #333; margin-bottom: 2vh; line-height: 1.4; }
+        .modal-time { font-size: clamp(18px, 2vw, 28px); color: #999; }
 
-        .record-modal { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-        .record-modal.show { display: flex; }
-        .record-box { background: white; padding: 25px; border-radius: 16px; text-align: left; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; }
-        .record-box h2 { color: #ff6b9d; font-size: 22px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .record-close { border: none; background: #eee; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; }
-        .record-controls { display: flex; gap: 8px; margin-bottom: 14px; }
-        .record-controls input, .record-controls select { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-        .record-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        .record-table th { text-align: left; padding: 8px 6px; border-bottom: 2px solid #eee; color: #888; font-size: 12px; }
-        .record-table td { padding: 8px 6px; border-bottom: 1px solid #f0f0f0; }
-        .record-empty { text-align: center; color: #999; padding: 20px; font-size: 14px; }
-        .record-tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        /* ---- Live record panel ---- */
+        .record-panel { background: white; padding: 3vh 2.2vw; border-radius: 16px; flex: 1 1 380px; max-width: 460px; text-align: left; height: 100%; display: flex; flex-direction: column; }
+        .record-panel h2 { color: #ff6b9d; font-size: clamp(22px, 2.4vw, 30px); margin-bottom: 0.6vh; }
+        .record-sub { color: #999; font-size: clamp(13px, 1.3vw, 16px); margin-bottom: 2vh; }
+        .record-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.2vh; }
+        .record-row { display: flex; align-items: center; justify-content: space-between; padding: 1.8vh 1.2vw; border-radius: 10px; background: #fafafa; font-size: clamp(16px, 1.7vw, 20px); }
+        .record-row .rname { font-weight: bold; color: #333; }
+        .record-row .rtime { color: #999; font-size: clamp(13px, 1.3vw, 16px); }
+        .record-tag { display: inline-block; padding: 0.5vh 1.2vw; border-radius: 20px; font-size: clamp(12px, 1.2vw, 15px); font-weight: bold; margin-right: 10px; white-space: nowrap; }
         .record-tag.checkin { background: #e6f7ee; color: #2fae66; }
         .record-tag.checkout { background: #fdeceb; color: #e2574c; }
+        .record-empty { text-align: center; color: #999; padding: 5vh 10px; font-size: clamp(14px, 1.5vw, 18px); }
+
+        @media (max-width: 850px) {
+            body { align-items: flex-start; }
+            .page-wrap { flex-direction: column; align-items: center; height: auto; }
+            .container, .record-panel { flex: 1 1 auto; max-width: 600px; width: 100%; height: auto; }
+            .record-panel { max-height: 50vh; }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎨 레이첼영어학원</h1>
-        <p>출석 입력</p>
-        
-        <div class="display" id="display">•••••</div>
-        
-        <div class="keypad">
-            <button onclick="addNum('1')">1</button>
-            <button onclick="addNum('2')">2</button>
-            <button onclick="addNum('3')">3</button>
-            <button onclick="addNum('4')">4</button>
-            <button onclick="addNum('5')">5</button>
-            <button onclick="addNum('6')">6</button>
-            <button onclick="addNum('7')">7</button>
-            <button onclick="addNum('8')">8</button>
-            <button onclick="addNum('9')">9</button>
-            <button onclick="addNum('0')">0</button>
-            <button onclick="clearNum()">지우기</button>
+    <div class="page-wrap">
+        <div class="container">
+            <h1>🎨 레이첼영어학원</h1>
+
+            <div class="guide-box">
+                <div class="guide-title">🔑 출결코드는 이렇게 확인해요</div>
+                <div class="guide-row">
+                    <span class="guide-order">첫째</span>
+                    <span class="guide-text">부모님 휴대폰 뒷 4자리 + <strong>1</strong> &nbsp;
+                        <span class="guide-example">예) 2339 → 23391</span>
+                    </span>
+                </div>
+                <div class="guide-row">
+                    <span class="guide-order">둘째</span>
+                    <span class="guide-text">부모님 휴대폰 뒷 4자리 + <strong>2</strong> &nbsp;
+                        <span class="guide-example">예) 2339 → 23392</span>
+                    </span>
+                </div>
+                <div class="guide-row">
+                    <span class="guide-order">셋째</span>
+                    <span class="guide-text">부모님 휴대폰 뒷 4자리 + <strong>3</strong> &nbsp;
+                        <span class="guide-example">예) 2339 → 23393</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="display" id="display">•••••</div>
+
+            <div class="keypad">
+                <button onclick="addNum('1')">1</button>
+                <button onclick="addNum('2')">2</button>
+                <button onclick="addNum('3')">3</button>
+                <button onclick="addNum('4')">4</button>
+                <button onclick="addNum('5')">5</button>
+                <button onclick="addNum('6')">6</button>
+                <button onclick="addNum('7')">7</button>
+                <button onclick="addNum('8')">8</button>
+                <button onclick="addNum('9')">9</button>
+                <button onclick="addNum('0')">0</button>
+                <button onclick="clearNum()">지우기</button>
+            </div>
+
+            <div class="actions">
+                <button class="btn-submit" onclick="checkIn()">등원</button>
+                <button class="btn-submit" onclick="checkOut()" style="background: #6c757d;">하원</button>
+            </div>
+
+            <div class="admin">
+                <button onclick="goAdmin()">🔐 관리자</button>
+            </div>
         </div>
-        
-        <div class="actions">
-            <button class="btn-submit" onclick="checkIn()">등원</button>
-            <button class="btn-submit" onclick="checkOut()" style="background: #6c757d;">하원</button>
-        </div>
-        
-        <div class="admin">
-            <button onclick="goAdmin()">🔐 관리자</button>
-            <button onclick="openRecordModal()" style="margin-top:8px;background:#ff6b9d;">📋 출결 기록</button>
+
+        <div class="record-panel">
+            <h2>📋 오늘의 출결 기록</h2>
+            <div class="record-sub" id="recordDate"></div>
+            <div class="record-list" id="recordList">
+                <div class="record-empty">불러오는 중...</div>
+            </div>
         </div>
     </div>
-    
+
     <div class="modal" id="modal">
         <div class="modal-box">
             <div class="modal-icon">✅</div>
@@ -85,32 +142,11 @@
         </div>
     </div>
 
-    <div class="record-modal" id="recordModal">
-        <div class="record-box">
-            <h2>
-                <span>📋 출결 기록</span>
-                <button class="record-close" onclick="closeRecordModal()">✕</button>
-            </h2>
-            <div class="record-controls">
-                <input type="date" id="recDate">
-                <select id="recMode">
-                    <option value="checkin">등원</option>
-                    <option value="checkout">하원</option>
-                </select>
-            </div>
-            <table class="record-table">
-                <thead><tr><th>이름</th><th>구분</th><th>시간</th></tr></thead>
-                <tbody id="recTable"></tbody>
-            </table>
-            <div id="recEmpty" class="record-empty" style="display:none;">기록이 없습니다</div>
-        </div>
-    </div>
-    
     <script>
         const DB_URL = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
         let num = '';
         let students = [];
-        
+
         function goAdmin() {
             const pass = prompt('관리자 비번을 입력하세요:');
             if (pass === '1234') {
@@ -119,7 +155,7 @@
                 alert('비번이 틀렸습니다');
             }
         }
-        
+
         function loadStudents() {
             fetch(DB_URL + '/students.json')
                 .then(res => res.json())
@@ -130,63 +166,64 @@
                 })
                 .catch(err => console.log('로드 실패:', err));
         }
-        
+
         function addNum(n) {
             if (num.length < 5) {
                 num += n;
                 updateDisplay();
             }
         }
-        
+
         function clearNum() {
             num = num.slice(0, -1);
             updateDisplay();
         }
-        
+
         function updateDisplay() {
             const masked = num.padEnd(5, '•');
             document.getElementById('display').textContent = masked.split('').join(' ');
         }
-        
+
         function showModal(name, text, time) {
             document.getElementById('modalName').textContent = name;
             document.getElementById('modalText').textContent = text;
             document.getElementById('modalTime').textContent = time;
             document.getElementById('modal').classList.add('show');
-            
+
             setTimeout(() => {
                 document.getElementById('modal').classList.remove('show');
                 num = '';
                 updateDisplay();
             }, 3000);
         }
-        
+
         function checkIn() {
             if (num.length !== 5) {
                 alert('5자리 번호를 입력하세요');
                 return;
             }
-            
+
             loadStudents();
             setTimeout(() => {
                 const student = students.find(s => s.pin === num);
-                
+
                 if (!student) {
                     alert('등록되지 않은 번호입니다');
                     num = '';
                     updateDisplay();
                     return;
                 }
-                
+
                 const today = new Date().toISOString().split('T')[0];
                 const time = new Date().toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
-                
+
                 fetch(DB_URL + '/attendance/' + today + '.json', {
                     method: 'POST',
                     body: JSON.stringify({name: student.name, type: 'checkin', time})
                 })
                 .then(() => {
                     showModal(student.name, '님이 등원하였습니다', time);
+                    loadRecords();
                 })
                 .catch(err => {
                     alert('저장 실패: ' + err);
@@ -195,33 +232,34 @@
                 });
             }, 300);
         }
-        
+
         function checkOut() {
             if (num.length !== 5) {
                 alert('5자리 번호를 입력하세요');
                 return;
             }
-            
+
             loadStudents();
             setTimeout(() => {
                 const student = students.find(s => s.pin === num);
-                
+
                 if (!student) {
                     alert('등록되지 않은 번호입니다');
                     num = '';
                     updateDisplay();
                     return;
                 }
-                
+
                 const today = new Date().toISOString().split('T')[0];
                 const time = new Date().toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
-                
+
                 fetch(DB_URL + '/attendance/' + today + '.json', {
                     method: 'POST',
                     body: JSON.stringify({name: student.name, type: 'checkout', time})
                 })
                 .then(() => {
                     showModal(student.name, '님이 하원하였습니다', time);
+                    loadRecords();
                 })
                 .catch(err => {
                     alert('저장 실패: ' + err);
@@ -230,51 +268,53 @@
                 });
             }, 300);
         }
-        
-        window.addEventListener('load', () => {
-            loadStudents();
-            updateDisplay();
-            document.getElementById('recDate').valueAsDate = new Date();
-            document.getElementById('recDate').addEventListener('change', loadRecords);
-            document.getElementById('recMode').addEventListener('change', loadRecords);
-        });
 
-        function openRecordModal() {
-            document.getElementById('recordModal').classList.add('show');
-            loadRecords();
-        }
-
-        function closeRecordModal() {
-            document.getElementById('recordModal').classList.remove('show');
-        }
-
+        /* ---------- Live record panel (오늘 기록, 최신순) ---------- */
         function loadRecords() {
-            const date = document.getElementById('recDate').value;
-            const mode = document.getElementById('recMode').value;
+            const today = new Date().toISOString().split('T')[0];
 
-            fetch(DB_URL + '/attendance/' + date + '.json')
+            fetch(DB_URL + '/attendance/' + today + '.json')
                 .then(res => res.json())
                 .then(data => {
                     const records = data || {};
-                    let rows = '';
-                    for (let key in records) {
-                        const r = records[key];
-                        if (r.type === mode) {
-                            rows += `<tr>
-                                <td><strong>${r.name}</strong></td>
-                                <td><span class="record-tag ${r.type}">${r.type === 'checkin' ? '등원' : '하원'}</span></td>
-                                <td>${r.time}</td>
-                            </tr>`;
-                        }
+                    const list = Object.values(records);
+
+                    // 최신 기록이 위로 오도록 정렬 (Firebase push key는 생성 순서를 반영)
+                    const keys = Object.keys(records);
+                    const sorted = keys
+                        .map(k => records[k])
+                        .reverse();
+
+                    if (sorted.length === 0) {
+                        document.getElementById('recordList').innerHTML = '<div class="record-empty">오늘 기록이 아직 없습니다</div>';
+                        return;
                     }
-                    document.getElementById('recTable').innerHTML = rows;
-                    document.getElementById('recEmpty').style.display = rows ? 'none' : 'block';
+
+                    let html = '';
+                    sorted.forEach(r => {
+                        html += `<div class="record-row">
+                            <div>
+                                <span class="record-tag ${r.type}">${r.type === 'checkin' ? '등원' : '하원'}</span>
+                                <span class="rname">${r.name}</span>
+                            </div>
+                            <span class="rtime">${r.time}</span>
+                        </div>`;
+                    });
+                    document.getElementById('recordList').innerHTML = html;
                 })
                 .catch(() => {
-                    document.getElementById('recTable').innerHTML = '';
-                    document.getElementById('recEmpty').style.display = 'block';
+                    document.getElementById('recordList').innerHTML = '<div class="record-empty">불러오기 실패</div>';
                 });
         }
+
+        window.addEventListener('load', () => {
+            loadStudents();
+            updateDisplay();
+            document.getElementById('recordDate').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+            loadRecords();
+            // 다른 기기에서 찍은 기록도 반영되도록 15초마다 자동 새로고침
+            setInterval(loadRecords, 15000);
+        });
     </script>
 </body>
 </html>
