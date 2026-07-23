@@ -273,6 +273,28 @@
   .send-row{display:flex;gap:8px;align-items:center;margin-top:12px;}
   .send-row .btn{margin-top:0;}
   .send-note{font-size:11px;color:var(--ink-soft);font-weight:600;}
+
+  /* --- 보낼 학생 고르기 --- */
+  .tg-box{border:1px solid #e6e9f0;border-radius:10px;background:#fafbfd;
+    padding:13px 14px;margin-bottom:16px;}
+  .tg-head{display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid #e9edf4;}
+  .tg-head label{display:flex;align-items:center;gap:7px;cursor:pointer;
+    font-size:13px;font-weight:800;color:#3a3f4b;margin:0;}
+  .tg-cnt{font-size:12px;color:var(--ink-soft);font-weight:700;}
+  .tg-row{display:flex;align-items:center;gap:9px;padding:5px 0;}
+  .tg-row input[type=checkbox]{width:17px;height:17px;cursor:pointer;flex:none;margin:0;}
+  .tg-row .nm{font-size:13px;font-weight:700;width:78px;flex:none;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tg-row .gr{font-size:11px;color:var(--ink-soft);width:34px;flex:none;font-weight:600;}
+  .tg-row input[type=text]{flex:1;margin:0;height:33px;font-size:12px;padding:6px 9px;}
+  .tg-row.off{opacity:.4;}
+  .tg-row .warn{font-size:11px;color:#c0392b;font-weight:700;flex:none;}
+  .tg-hint{font-size:11px;color:var(--ink-soft);margin-top:9px;line-height:1.6;}
+  .tg-warn{margin-top:10px;background:#fdecec;border:1px solid #f5b8b8;border-radius:8px;
+    padding:9px 11px;font-size:12px;color:#8a2020;font-weight:700;line-height:1.6;}
+  .hw-extra{font-size:12px;color:#5b3fa8;margin-top:6px;font-weight:700;}
+  .hw-extra span{font-weight:500;color:#6b5a95;}
   tbody tr[data-clickable]{cursor:pointer;}
 
   /* ---- 로그인 화면 ---- */
@@ -473,15 +495,16 @@
                 </div>
               </div>
               <div class="form-group">
-                <label>숙제 내용</label>
+                <label>공통 숙제 (선택한 학생 모두에게 나갑니다)</label>
                 <textarea id="hw_content" rows="4"
                   placeholder="예: 워크북 34~36쪽&#10;단어 20개 외워오기"></textarea>
               </div>
+
+              <div id="hwTargets"></div>
+
               <button class="btn" onclick="saveHomework()">숙제 저장</button>
               <button class="btn ghost" id="hwCancelBtn" style="display:none;"
                 onclick="resetHwForm()">수정 취소</button>
-
-              <div id="hwRecipients"></div>
 
               <div class="hw-sec">📋 이 반의 숙제 내역</div>
               <div id="hwList"></div>
@@ -1550,6 +1573,7 @@ function unassignStudent(studentKey) {
 let hwSelectedClass = null;
 let hwEditingKey = null;
 let hwCache = {};
+let hwTargetState = {};   // { 학생키: { checked, extra } }
 
 function todayStr() {
   const d = new Date();
@@ -1608,7 +1632,6 @@ function selectHwClass(cn) {
   document.getElementById('hwEditor').style.display = 'block';
   document.getElementById('hwPanelTitle').textContent = cn + ' 숙제';
   resetHwForm();
-  renderRecipients();
   renderHwList();
 }
 
@@ -1618,6 +1641,12 @@ function resetHwForm() {
   document.getElementById('hw_due').value = '';
   document.getElementById('hw_content').value = '';
   document.getElementById('hwCancelBtn').style.display = 'none';
+  // 기본값: 반 전체 선택, 개별 추가 없음
+  hwTargetState = {};
+  classMembers(hwSelectedClass).forEach(([key]) => {
+    hwTargetState[key] = { checked: true, extra: '' };
+  });
+  renderTargets();
 }
 
 /* --- 발송 대상 미리보기 --- */
@@ -1627,31 +1656,71 @@ function classMembers(cn) {
     .sort((a, b) => (a[1].name || '').localeCompare(b[1].name || '', 'ko'));
 }
 
-function renderRecipients() {
+function renderTargets() {
   const members = classMembers(hwSelectedClass);
-  const missing = members.filter(([, s]) => !s.phone);
+  const checked = members.filter(([k]) => hwTargetState[k] && hwTargetState[k].checked);
+  const noPhone = checked.filter(([, s]) => !s.phone);
 
-  let lines = '';
-  members.forEach(([, s]) => {
-    lines += `<div class="rcpt-line">
-      <span>${s.name} <span style="color:var(--ink-soft);font-size:11px;">${s.pname || ''}</span></span>
-      ${s.phone
-        ? `<span style="color:var(--ink-soft);">${s.phone}</span>`
-        : '<span class="no-ph">전화번호 없음</span>'}
+  let rows = '';
+  members.forEach(([key, s]) => {
+    const st = hwTargetState[key] || { checked: true, extra: '' };
+    rows += `<div class="tg-row ${st.checked ? '' : 'off'}" id="tgrow-${key}">
+      <input type="checkbox" ${st.checked ? 'checked' : ''}
+        onchange="toggleTarget('${key}', this.checked)">
+      <span class="nm">${s.name}</span>
+      <span class="gr">${s.grade || ''}</span>
+      <input type="text" placeholder="이 학생만 추가로 낼 숙제 (선택)"
+        value="${escapeAttr(st.extra || '')}"
+        ${st.checked ? '' : 'disabled'}
+        oninput="setExtra('${key}', this.value)">
+      ${s.phone ? '' : '<span class="warn">번호없음</span>'}
     </div>`;
   });
 
-  const warn = missing.length
-    ? `<div class="rcpt-warn">학부모 전화번호가 없는 학생이 ${missing.length}명 있습니다.
-       이 학생들은 알림톡을 못 받습니다. 학생 관리에서 번호를 넣어주세요.</div>`
+  const warn = noPhone.length
+    ? `<div class="tg-warn">선택한 학생 중 ${noPhone.length}명은 학부모 전화번호가 없어 알림톡을 받지 못합니다.
+       학생 관리에서 번호를 채워주세요.</div>`
     : '';
 
-  document.getElementById('hwRecipients').innerHTML = `
-    <div class="rcpt-box">
-      <div class="rcpt-head">발송 대상 ${members.length}명 중 ${members.length - missing.length}명 발송 가능</div>
-      ${lines}
+  document.getElementById('hwTargets').innerHTML = `
+    <div class="tg-box">
+      <div class="tg-head">
+        <label>
+          <input type="checkbox" ${checked.length === members.length ? 'checked' : ''}
+            onchange="toggleAllTargets(this.checked)">
+          보낼 학생 선택
+        </label>
+        <span class="tg-cnt">${checked.length} / ${members.length}명</span>
+      </div>
+      ${rows}
+      <div class="tg-hint">체크한 학생에게만 나갑니다.
+        오른쪽 칸에 적으면 그 학생 문자에만 뒤에 덧붙습니다.</div>
       ${warn}
     </div>`;
+}
+
+function escapeAttr(t) {
+  return String(t).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function toggleTarget(key, on) {
+  if (!hwTargetState[key]) hwTargetState[key] = { checked: true, extra: '' };
+  hwTargetState[key].checked = on;
+  renderTargets();
+}
+
+function toggleAllTargets(on) {
+  classMembers(hwSelectedClass).forEach(([key]) => {
+    if (!hwTargetState[key]) hwTargetState[key] = { checked: true, extra: '' };
+    hwTargetState[key].checked = on;
+  });
+  renderTargets();
+}
+
+// 입력 중에는 화면을 다시 그리지 않는다 (커서가 튀지 않게)
+function setExtra(key, val) {
+  if (!hwTargetState[key]) hwTargetState[key] = { checked: true, extra: '' };
+  hwTargetState[key].extra = val;
 }
 
 /* --- 저장 / 수정 / 삭제 --- */
@@ -1664,12 +1733,21 @@ function saveHomework() {
   if (!date) { alert('수업 날짜를 입력해주세요'); return; }
   if (!content) { alert('숙제 내용을 입력해주세요'); return; }
 
+  const targets = {};
+  Object.entries(hwTargetState).forEach(([key, st]) => {
+    if (st.checked) targets[key] = { extra: (st.extra || '').trim() };
+  });
+  if (!Object.keys(targets).length) { alert('보낼 학생을 한 명 이상 선택해주세요'); return; }
+
   const teacher = hwSelectedClass.split(' ').slice(0, -1).join(' ');
-  const payload = { className: hwSelectedClass, teacher, date, due, content };
+  const payload = { className: hwSelectedClass, teacher, date, due, content, targets };
 
   const req = hwEditingKey
     ? fetch(DB_URL + '/homework/' + hwEditingKey + '.json',
-        { method: 'PATCH', body: JSON.stringify(payload) })
+        { method: 'PATCH', body: JSON.stringify(
+            Object.assign({}, payload, { targets: null })) })
+        .then(() => fetch(DB_URL + '/homework/' + hwEditingKey + '/targets.json',
+            { method: 'PUT', body: JSON.stringify(targets) }))
     : fetch(DB_URL + '/homework.json',
         { method: 'POST', body: JSON.stringify(
             Object.assign({}, payload, { createdAt: Date.now(), sent: false })) });
@@ -1685,6 +1763,15 @@ function editHomework(key) {
   document.getElementById('hw_due').value = h.due || '';
   document.getElementById('hw_content').value = h.content || '';
   document.getElementById('hwCancelBtn').style.display = 'inline-block';
+
+  const saved = h.targets || {};
+  hwTargetState = {};
+  classMembers(hwSelectedClass).forEach(([sk]) => {
+    hwTargetState[sk] = saved[sk]
+      ? { checked: true, extra: saved[sk].extra || '' }
+      : { checked: false, extra: '' };
+  });
+  renderTargets();
   document.getElementById('hw_content').focus();
 }
 
@@ -1718,6 +1805,8 @@ function renderHwList() {
         </span>
       </div>
       <div class="body">${escapeHtml(h.content || '')}</div>
+      ${extraSummary(h)}
+      <div class="send-note" style="display:block;margin-top:7px;">받는 학생 ${targetCount(h)}명</div>
       <div class="send-row">
         <button class="btn ghost" onclick="previewMessage('${key}')">알림톡 미리보기</button>
         <button class="btn ghost" disabled title="알림톡 연동 후 사용할 수 있습니다"
@@ -1744,25 +1833,53 @@ function escapeHtml(t) {
 }
 
 /* --- 알림톡 문구 미리보기 (심사 템플릿과 동일한 형식) --- */
+function targetCount(h) {
+  return h.targets ? Object.keys(h.targets).length : classMembers(h.className).length;
+}
+
+function extraSummary(h) {
+  if (!h.targets) return '';
+  const withExtra = Object.entries(h.targets).filter(([, t]) => t && t.extra);
+  if (!withExtra.length) return '';
+  let lines = '';
+  withExtra.forEach(([sk, t]) => {
+    const st = studentsCache[sk];
+    lines += `<div class="hw-extra">＋ ${st ? st.name : '(삭제된 학생)'} <span>${escapeHtml(t.extra)}</span></div>`;
+  });
+  return lines;
+}
+
+function buildMessage(h, studentName, extra) {
+  return '[레이첼영어학원]\n' +
+    fmtDate(h.date) + ' ' + studentName + ' 학생의 숙제 안내입니다.\n\n' +
+    '▶ ' + h.content +
+    (extra ? '\n▶ ' + extra : '') + '\n\n' +
+    (h.due ? '제출일: ' + fmtDate(h.due) : '제출일: 다음 수업');
+}
+
+/* --- 알림톡 문구 미리보기 (학생별) --- */
 function previewMessage(key) {
   const box = document.getElementById('msg-' + key);
   if (box.innerHTML) { box.innerHTML = ''; return; }
 
   const h = hwCache[key];
-  const members = classMembers(h.className);
-  const sample = members.length ? members[0][1].name : '○○';
+  const targets = h.targets || {};
+  const keys = Object.keys(targets).length
+    ? Object.keys(targets)
+    : classMembers(h.className).map(([k]) => k);
 
-  const text =
-    '[레이첼영어학원]\n' +
-    fmtDate(h.date) + ' ' + sample + ' 학생의 숙제 안내입니다.\n\n' +
-    '▶ ' + h.content + '\n\n' +
-    (h.due ? '제출일: ' + fmtDate(h.due) : '제출일: 다음 수업');
+  let html = '';
+  keys.forEach(sk => {
+    const st = studentsCache[sk];
+    if (!st) return;
+    const extra = targets[sk] ? targets[sk].extra : '';
+    html += `<div class="msg-preview">${escapeHtml(buildMessage(h, st.name, extra))}</div>`;
+  });
 
-  box.innerHTML = `<div class="msg-preview">${escapeHtml(text)}</div>
-    <div class="send-note" style="margin-top:7px;display:block;">
-      학생 이름은 받는 분마다 자동으로 바뀝니다. 위는 ${sample} 학생 기준 예시입니다.
-    </div>`;
+  box.innerHTML = html + `<div class="send-note" style="margin-top:7px;display:block;">
+    실제로 발송될 문구입니다. 받는 분마다 위와 같이 따로 나갑니다.</div>`;
 }
+
 
 /* ---------- 모달 닫기 편의 기능 ---------- */
 document.getElementById('studentInfoModal').addEventListener('click', function(e){
