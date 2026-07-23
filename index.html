@@ -40,9 +40,10 @@ body{
 
 h1{
   color:var(--coral);
-  font-size:clamp(24px,2.8vw,38px);
+  font-size:clamp(30px,6vh,54px);
   font-weight:900;letter-spacing:1px;text-align:center;
-  margin-bottom:0.6vh;
+  line-height:1.15;white-space:nowrap;
+  margin:0 0 1.4vh;
 }
 
 /* 번호 입력 표시 — 높이 절반, 위로 붙임 */
@@ -50,15 +51,15 @@ h1{
   background:linear-gradient(135deg,#fff5f8 0%,#ffe6f0 100%);
   border:3px solid #ffb8cf;
   border-radius:14px;
-  padding:0.35vh 1vw;
-  margin:0 0 1vh;
-  min-height:clamp(38px,5vh,54px);
+  padding:0.6vh 1vw;
+  margin:0 0 1.1vh;
+  min-height:clamp(58px,9vh,92px);
   display:flex;align-items:center;justify-content:center;
-  font-size:clamp(20px,2.3vw,30px);
-  font-weight:900;letter-spacing:6px;color:var(--coral);
+  font-size:clamp(30px,5.2vh,48px);
+  font-weight:900;letter-spacing:10px;color:var(--coral);
   box-shadow:0 4px 14px rgba(255,107,157,.18);
 }
-.display .ph{color:#ffc2d6;letter-spacing:2px;font-size:0.62em;font-weight:700;}
+.display .ph{color:#ffc2d6;letter-spacing:2px;font-size:0.5em;font-weight:700;}
 
 /* 키패드 : 모든 키가 동일한 크기의 정사각형 (3열 정렬) */
 .keypad{
@@ -84,7 +85,13 @@ h1{
 .keypad button:active{transform:scale(.95);}
 
 .keypad .key-del{
-  font-size:clamp(18px,4vh,34px);white-space:nowrap;
+  width:100%;
+  aspect-ratio:auto;
+  height:clamp(44px,6.5vh,64px);
+  border-radius:14px;
+  letter-spacing:2px;
+  font-size:clamp(18px,3.6vh,30px);
+  white-space:nowrap;
 }
 .keypad .key-in{
   background:linear-gradient(135deg,#3d8bfd,#6fb1ff);
