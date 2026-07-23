@@ -223,6 +223,9 @@
     padding:9px 10px;border-radius:7px;cursor:pointer;font-size:13px;}
   .pick-row:hover{background:#f4f7ff;}
   .pick-row .cur{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .db-error{background:#fdecec;border:1px solid #f5b8b8;border-radius:10px;
+    padding:16px 18px;font-size:13px;line-height:1.7;color:#8a2020;}
+  .db-error code{background:#fff;padding:2px 6px;border-radius:4px;font-size:12px;}
   tbody tr[data-clickable]{cursor:pointer;}
 
   /* ---- 로그인 화면 ---- */
@@ -746,8 +749,8 @@ function openStudentModal(key) {
   document.getElementById('m_phone').value = s.phone || '';
 
   Promise.all([
-    fetch(DB_URL + '/teachers.json').then(r => r.json()),
-    fetch(DB_URL + '/timeslots.json').then(r => r.json())
+    dbGet('/teachers'),
+    dbGet('/timeslots')
   ]).then(([teachers, slots]) => {
       const tArr = Object.values(teachers || {}).sort((a, b) => (a.order || 0) - (b.order || 0));
       const sArr = Object.values(slots || {}).sort((a, b) => slotMinutes(a.label) - slotMinutes(b.label));
@@ -1034,6 +1037,37 @@ const SLOT_SPAN = 40; // 분
 let teachersCache = {};
 let slotsCache = {};
 let selectedTeacher = null;
+let dbErrorShown = false;
+
+// 권한 오류를 조용히 넘기지 않도록 감싼 읽기 함수
+function dbGet(path) {
+  return fetch(DB_URL + path + '.json')
+    .then(r => r.json())
+    .then(data => {
+      if (data && typeof data === 'object' && data.error) {
+        showDbError(path, data.error);
+        return null;
+      }
+      return data;
+    })
+    .catch(() => null);
+}
+
+function showDbError(path, msg) {
+  if (dbErrorShown) return;
+  dbErrorShown = true;
+  const grid = document.getElementById('slotGrid');
+  if (grid) {
+    grid.innerHTML = `<div class="db-error">
+      <strong>데이터를 불러올 수 없습니다</strong><br>
+      경로: <code>${path}</code><br>
+      사유: ${msg}<br><br>
+      Firebase 콘솔 → Realtime Database → 규칙 에서
+      이 경로에 대한 권한이 있는지 확인해주세요.
+    </div>`;
+  }
+  console.error('DB 접근 실패:', path, msg);
+}
 
 // "Rachel 2:00" 형태로 반 이름을 만든다
 function makeClassName(teacherName, slotLabel) {
@@ -1075,10 +1109,11 @@ function sortedTeachers() {
 /* --- 최초 1회 기본 데이터 만들기 --- */
 function ensureDefaults() {
   return Promise.all([
-    fetch(DB_URL + '/teachers.json').then(r => r.json()),
-    fetch(DB_URL + '/timeslots.json').then(r => r.json()),
-    fetch(DB_URL + '/classes.json').then(r => r.json())
+    dbGet('/teachers'),
+    dbGet('/timeslots'),
+    dbGet('/classes')
   ]).then(([teachers, slots, oldClasses]) => {
+    if (dbErrorShown) return;
     const jobs = [];
 
     // 선생님이 없으면 기존 클래스 이름을 그대로 가져온다
@@ -1110,11 +1145,12 @@ function ensureDefaults() {
 function loadClasses() {
   return ensureDefaults()
     .then(() => Promise.all([
-      fetch(DB_URL + '/teachers.json').then(r => r.json()),
-      fetch(DB_URL + '/timeslots.json').then(r => r.json()),
+      dbGet('/teachers'),
+      dbGet('/timeslots'),
       loadStudents()
     ]))
     .then(([teachers, slots]) => {
+      if (dbErrorShown) return;
       teachersCache = teachers || {};
       slotsCache = slots || {};
 
