@@ -171,6 +171,58 @@
   .att-badge.in{background:#3d8bfd;}
   .att-badge.out{background:#ff8c1a;}
   .att-loading{color:var(--ink-soft);font-size:13px;padding:14px 0;text-align:center;}
+
+  /* --- 선생님 목록 --- */
+  .t-item{display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:10px 12px;border-radius:9px;cursor:pointer;margin-bottom:5px;
+    border:1px solid transparent;transition:background .12s;}
+  .t-item:hover{background:#f4f7ff;}
+  .t-item.active{background:#eef3ff;border-color:#c3d4ff;}
+  .t-item .t-name{font-weight:800;font-size:14px;}
+  .t-item.active .t-name{color:#2a53d8;}
+  .t-item .t-cnt{font-size:12px;color:var(--ink-soft);font-weight:600;margin-left:6px;}
+  .t-acts{display:flex;gap:4px;opacity:0;transition:opacity .12s;}
+  .t-item:hover .t-acts,.t-item.active .t-acts{opacity:1;}
+  .t-acts button{background:none;border:none;cursor:pointer;font-size:11px;
+    color:var(--ink-soft);padding:3px 6px;border-radius:5px;font-weight:700;}
+  .t-acts button:hover{background:#fff;color:#2a53d8;}
+  .t-acts button.danger:hover{color:#e24b4a;}
+  .unassigned-box{margin-top:14px;padding:11px 12px;background:#fff8ec;
+    border:1px solid #ffe0b2;border-radius:9px;font-size:13px;font-weight:700;color:#8a5a12;}
+  .unassigned-box.none{background:#f2f7f2;border-color:#d8e8d8;color:#3f6b41;}
+
+  /* --- 시간대 카드 --- */
+  #slotGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:12px;}
+  .slot-card{border:1px solid #e6e9f0;border-radius:11px;padding:12px 13px;background:#fff;}
+  .slot-card.empty-slot{border-style:dashed;background:#fafbfd;}
+  .slot-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+  .slot-time{font-weight:800;font-size:14px;}
+  .slot-cnt{font-size:11px;color:var(--ink-soft);font-weight:700;}
+  .slot-del{background:none;border:none;cursor:pointer;color:#ccd;font-size:13px;padding:0 3px;}
+  .slot-del:hover{color:#e24b4a;}
+  .stu-chip{display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:6px 8px;border-radius:7px;font-size:13px;margin-bottom:4px;background:#f6f8fc;}
+  .stu-chip .nm{font-weight:700;cursor:pointer;}
+  .stu-chip .nm:hover{color:#2a53d8;text-decoration:underline;}
+  .stu-chip .gr{font-size:11px;color:var(--ink-soft);margin-left:5px;font-weight:600;}
+  .stu-chip .mid{font-size:10px;background:#ede4ff;color:#5b3fa8;
+    padding:2px 6px;border-radius:20px;font-weight:800;margin-left:5px;}
+  .stu-chip .rm{background:none;border:none;cursor:pointer;color:#bbc;font-size:13px;padding:0 2px;}
+  .stu-chip .rm:hover{color:#e24b4a;}
+  .slot-none{font-size:12px;color:#aab;padding:5px 0 9px;}
+  .slot-add{width:100%;background:none;border:1px dashed #cdd4e4;border-radius:7px;
+    padding:6px;font-size:12px;font-weight:700;color:var(--ink-soft);cursor:pointer;margin-top:3px;}
+  .slot-add:hover{border-color:#8fa8ff;color:#2a53d8;background:#f7f9ff;}
+  .slot-add-row{display:flex;gap:8px;margin-top:16px;align-items:center;}
+  .slot-add-row input{width:130px;margin:0;}
+  .slot-add-row .btn{margin-top:0;}
+
+  /* --- 학생 고르기 --- */
+  .pick-list{max-height:320px;overflow-y:auto;margin-bottom:14px;}
+  .pick-row{display:flex;justify-content:space-between;align-items:center;
+    padding:9px 10px;border-radius:7px;cursor:pointer;font-size:13px;}
+  .pick-row:hover{background:#f4f7ff;}
+  .pick-row .cur{font-size:11px;color:var(--ink-soft);font-weight:600;}
   tbody tr[data-clickable]{cursor:pointer;}
 
   /* ---- 로그인 화면 ---- */
@@ -326,24 +378,23 @@
       <div class="page" id="page-classes">
         <div class="grid-classes">
           <div class="card">
-            <h2>🏫 클래스 목록</h2>
+            <h2>👩‍🏫 선생님</h2>
             <div class="form-group">
-              <label>새 클래스 이름</label>
-              <input type="text" id="newClassName" placeholder="예: selah 2:00">
+              <label>선생님 이름 추가</label>
+              <input type="text" id="newTeacherName" placeholder="예: Rachel">
             </div>
-            <button class="btn" onclick="addClass()">클래스 추가</button>
-            <div style="margin-top:16px;" id="classList"></div>
+            <button class="btn" onclick="addTeacher()">선생님 추가</button>
+            <div style="margin-top:16px;" id="teacherList"></div>
+            <div id="unassignedBox" class="unassigned-box"></div>
           </div>
 
           <div class="card">
-            <h2 id="classPanelTitle">👥 학생을 클래스에 배정
-              <span style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:8px;">학생 이름을 누르면 정보가 열립니다</span>
-            </h2>
-            <table>
-              <thead><tr><th>이름</th><th>학교</th><th>학년</th><th>현재 클래스</th><th style="width:180px;">배정</th></tr></thead>
-              <tbody id="classAssignTable"></tbody>
-            </table>
-            <div id="classAssignEmpty" class="empty" style="display:none;">등록된 학생이 없습니다</div>
+            <h2 id="slotPanelTitle">시간표</h2>
+            <div id="slotGrid"></div>
+            <div class="slot-add-row">
+              <input type="text" id="newSlotLabel" placeholder="예: 6:00">
+              <button class="btn ghost" onclick="addSlot()">시간대 추가</button>
+            </div>
           </div>
         </div>
       </div>
@@ -375,6 +426,23 @@
 </div>
 
 <!-- ===== Student Detail Modal ===== -->
+<!-- ===== 학생 고르기 ===== -->
+<div class="modal-overlay" id="pickModal">
+  <div class="modal-box">
+    <h2>
+      <span id="p_title">학생 배정</span>
+      <button class="modal-close" onclick="closePicker()">✕</button>
+    </h2>
+    <div class="form-group">
+      <input type="text" id="p_search" placeholder="이름으로 검색" oninput="renderPickList()">
+    </div>
+    <div class="pick-list" id="p_list"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closePicker()">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 학생 정보 보기 ===== -->
 <div class="modal-overlay" id="studentInfoModal">
   <div class="modal-box">
@@ -677,14 +745,23 @@ function openStudentModal(key) {
   document.getElementById('m_pname').value = s.pname || '';
   document.getElementById('m_phone').value = s.phone || '';
 
-  fetch(DB_URL + '/classes.json')
-    .then(r => r.json())
-    .then(data => {
-      const classes = data || {};
+  Promise.all([
+    fetch(DB_URL + '/teachers.json').then(r => r.json()),
+    fetch(DB_URL + '/timeslots.json').then(r => r.json())
+  ]).then(([teachers, slots]) => {
+      const tArr = Object.values(teachers || {}).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const sArr = Object.values(slots || {}).sort((a, b) => slotMinutes(a.label) - slotMinutes(b.label));
       let optionsHtml = '<option value="">- 미배정 -</option>';
-      for (let ck in classes) {
-        const sel = classes[ck].name === s.className ? ' selected' : '';
-        optionsHtml += `<option value="${classes[ck].name}"${sel}>${classes[ck].name}</option>`;
+      tArr.forEach(t => {
+        sArr.forEach(sl => {
+          const cn = t.name + ' ' + sl.label;
+          const sel = cn === s.className ? ' selected' : '';
+          optionsHtml += `<option value="${cn}"${sel}>${cn}</option>`;
+        });
+      });
+      // 목록에 없는 예전 반 이름도 유지
+      if (s.className && !optionsHtml.includes(`value="${s.className}"`)) {
+        optionsHtml += `<option value="${s.className}" selected>${s.className}</option>`;
       }
       document.getElementById('m_className').innerHTML = optionsHtml;
     });
@@ -950,104 +1027,350 @@ async function submitBulk() {
   loadStudents();
 }
 
-/* ---------- Classes ---------- */
-function addClass() {
-  const name = document.getElementById('newClassName').value.trim();
-  if (!name) { alert('클래스 이름을 입력하세요'); return; }
+/* ---------- 선생님 / 시간대 / 반 배정 ---------- */
+const DEFAULT_SLOTS = ['2:00','2:40','3:20','4:00','4:40','5:20'];
+const SLOT_SPAN = 40; // 분
 
-  fetch(DB_URL + '/classes.json')
-    .then(res => res.json())
-    .then(data => {
-      const classes = data || {};
-      for (let key in classes) {
-        if (classes[key].name === name) { alert('이미 있는 클래스 이름입니다'); return; }
-      }
-      fetch(DB_URL + '/classes.json', { method: 'POST', body: JSON.stringify({name}) })
-        .then(() => {
-          document.getElementById('newClassName').value = '';
-          loadClasses();
-        });
-    });
+let teachersCache = {};
+let slotsCache = {};
+let selectedTeacher = null;
+
+// "Rachel 2:00" 형태로 반 이름을 만든다
+function makeClassName(teacherName, slotLabel) {
+  return teacherName + ' ' + slotLabel;
 }
 
-function deleteClass(key, name) {
-  if (!confirm(`"${name}" 클래스를 삭제하시겠습니까? 배정된 학생의 클래스 정보도 함께 지워집니다.`)) return;
-  fetch(DB_URL + '/classes/' + key + '.json', { method: 'DELETE' })
-    .then(() => {
-      const updates = {};
-      for (let sKey in studentsCache) {
-        if (studentsCache[sKey].className === name) updates[sKey] = null;
-      }
-      const tasks = Object.keys(updates).map(sKey =>
-        fetch(DB_URL + '/students/' + sKey + '/className.json', { method: 'DELETE' })
-      );
-      Promise.all(tasks).then(() => loadClasses());
-    });
+// 시간 라벨 -> "2:00 ~ 2:40"
+function slotRange(label) {
+  const m = label.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return label;
+  let h = +m[1], mi = +m[2] + SLOT_SPAN;
+  h += Math.floor(mi / 60); mi = mi % 60;
+  if (h > 12) h -= 12;
+  return label + ' ~ ' + h + ':' + String(mi).padStart(2, '0');
 }
 
-function assignClass(studentKey, className) {
-  const payload = className ? JSON.stringify(className) : null;
-  const req = className
-    ? fetch(DB_URL + '/students/' + studentKey + '/className.json', { method: 'PUT', body: payload })
-    : fetch(DB_URL + '/students/' + studentKey + '/className.json', { method: 'DELETE' });
-  req.then(() => loadClasses());
+function isMiddleOrUp(grade) {
+  return /[중고]/.test(grade || '');
 }
 
-function loadClasses() {
+// 정렬용: "2:00" -> 오후 기준 분
+function slotMinutes(label) {
+  const m = label.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return 9999;
+  let h = +m[1]; if (h < 12) h += 12;
+  return h * 60 + (+m[2]);
+}
+
+function sortedSlots() {
+  return Object.entries(slotsCache)
+    .sort((a, b) => slotMinutes(a[1].label) - slotMinutes(b[1].label));
+}
+
+function sortedTeachers() {
+  return Object.entries(teachersCache)
+    .sort((a, b) => (a[1].order || 0) - (b[1].order || 0));
+}
+
+/* --- 최초 1회 기본 데이터 만들기 --- */
+function ensureDefaults() {
   return Promise.all([
-    fetch(DB_URL + '/classes.json').then(r => r.json()),
-    loadStudents()
-  ]).then(([classData, students]) => {
-    const classes = classData || {};
-    classesCache = classes;
+    fetch(DB_URL + '/teachers.json').then(r => r.json()),
+    fetch(DB_URL + '/timeslots.json').then(r => r.json()),
+    fetch(DB_URL + '/classes.json').then(r => r.json())
+  ]).then(([teachers, slots, oldClasses]) => {
+    const jobs = [];
 
-    // count students per class
-    const countByName = {};
-    Object.values(students).forEach(s => {
-      if (s.className) countByName[s.className] = (countByName[s.className] || 0) + 1;
+    // 선생님이 없으면 기존 클래스 이름을 그대로 가져온다
+    if (!teachers || !Object.keys(teachers).length) {
+      const names = Object.values(oldClasses || {}).map(c => c.name).filter(Boolean);
+      const payload = {};
+      names.forEach((n, i) => { payload['t' + i] = { name: n, order: i }; });
+      if (Object.keys(payload).length) {
+        jobs.push(fetch(DB_URL + '/teachers.json', {
+          method: 'PATCH', body: JSON.stringify(payload)
+        }));
+      }
+    }
+
+    // 시간대가 없으면 기본 6개
+    if (!slots || !Object.keys(slots).length) {
+      const payload = {};
+      DEFAULT_SLOTS.forEach((lb, i) => { payload['s' + i] = { label: lb, order: i }; });
+      jobs.push(fetch(DB_URL + '/timeslots.json', {
+        method: 'PATCH', body: JSON.stringify(payload)
+      }));
+    }
+
+    return Promise.all(jobs);
+  });
+}
+
+/* --- 화면 그리기 --- */
+function loadClasses() {
+  return ensureDefaults()
+    .then(() => Promise.all([
+      fetch(DB_URL + '/teachers.json').then(r => r.json()),
+      fetch(DB_URL + '/timeslots.json').then(r => r.json()),
+      loadStudents()
+    ]))
+    .then(([teachers, slots]) => {
+      teachersCache = teachers || {};
+      slotsCache = slots || {};
+
+      const tList = sortedTeachers();
+      if (!selectedTeacher || !teachersCache[selectedTeacher]) {
+        selectedTeacher = tList.length ? tList[0][0] : null;
+      }
+      renderTeachers();
+      renderSlots();
+    });
+}
+
+function countForTeacher(tName) {
+  return Object.values(studentsCache)
+    .filter(s => (s.className || '').startsWith(tName + ' ')).length;
+}
+
+function renderTeachers() {
+  const list = sortedTeachers();
+  let html = '';
+  list.forEach(([key, t]) => {
+    html += `<div class="t-item ${key === selectedTeacher ? 'active' : ''}" onclick="selectTeacher('${key}')">
+      <span><span class="t-name">${t.name}</span><span class="t-cnt">${countForTeacher(t.name)}명</span></span>
+      <span class="t-acts">
+        <button onclick="event.stopPropagation();renameTeacher('${key}')">이름수정</button>
+        <button class="danger" onclick="event.stopPropagation();deleteTeacher('${key}')">삭제</button>
+      </span>
+    </div>`;
+  });
+  document.getElementById('teacherList').innerHTML =
+    html || '<div class="empty">선생님을 먼저 추가해주세요</div>';
+
+  const un = Object.values(studentsCache).filter(s => !s.className).length;
+  const box = document.getElementById('unassignedBox');
+  box.className = 'unassigned-box' + (un ? '' : ' none');
+  box.textContent = un ? `미배정 학생 ${un}명` : '모든 학생이 배정되었습니다';
+}
+
+function selectTeacher(key) {
+  selectedTeacher = key;
+  renderTeachers();
+  renderSlots();
+}
+
+function renderSlots() {
+  const grid = document.getElementById('slotGrid');
+  const title = document.getElementById('slotPanelTitle');
+
+  if (!selectedTeacher) {
+    title.textContent = '시간표';
+    grid.innerHTML = '<div class="empty">왼쪽에서 선생님을 선택하세요</div>';
+    return;
+  }
+
+  const tName = teachersCache[selectedTeacher].name;
+  title.innerHTML = `${tName} 선생님 시간표
+    <span style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:8px;">이름을 누르면 학생 정보가 열립니다</span>`;
+
+  let html = '';
+  sortedSlots().forEach(([sKey, slot]) => {
+    const cName = makeClassName(tName, slot.label);
+    const members = Object.entries(studentsCache)
+      .filter(([, s]) => s.className === cName)
+      .sort((a, b) => (a[1].name || '').localeCompare(b[1].name || '', 'ko'));
+
+    let chips = '';
+    members.forEach(([stuKey, s]) => {
+      chips += `<div class="stu-chip">
+        <span>
+          <span class="nm" onclick="openStudentInfo('${stuKey}')">${s.name}</span>
+          <span class="gr">${s.grade || ''}</span>
+          ${isMiddleOrUp(s.grade) ? '<span class="mid">개인</span>' : ''}
+        </span>
+        <button class="rm" title="이 반에서 빼기" onclick="unassignStudent('${stuKey}')">✕</button>
+      </div>`;
     });
 
-    let listHtml = '';
-    for (let key in classes) {
-      const c = classes[key];
-      listHtml += `<div class="class-item">
-        <span>${c.name} <span class="cnt">(${countByName[c.name] || 0}명)</span></span>
-        <button class="del" onclick="deleteClass('${key}','${c.name}')">삭제</button>
-      </div>`;
-    }
-    document.getElementById('classList').innerHTML = listHtml || '<div class="empty">클래스가 없습니다. 먼저 추가해주세요.</div>';
-
-    // options for select
-    let optionsHtml = '<option value="">- 미배정 -</option>';
-    for (let key in classes) {
-      optionsHtml += `<option value="${classes[key].name}">${classes[key].name}</option>`;
-    }
-
-    let rows = '';
-    for (let sKey in students) {
-      const s = students[sKey];
-      let selectHtml = optionsHtml.replace(
-        `value="${s.className}"`, `value="${s.className}" selected`
-      );
-      rows += `<tr class="clickable" onclick="if(!event.target.closest('select'))openStudentInfo('${sKey}')">
-        <td><strong>${s.name}</strong></td>
-        <td>${s.school || '-'}</td>
-        <td>${s.grade || '-'}</td>
-        <td>${s.className ? `<span class="tag class">${s.className}</span>` : '-'}</td>
-        <td onclick="event.stopPropagation()"><select onchange="assignClass('${sKey}', this.value)">${selectHtml}</select></td>
-      </tr>`;
-    }
-    document.getElementById('classAssignTable').innerHTML = rows;
-    document.getElementById('classAssignEmpty').style.display = rows ? 'none' : 'block';
+    html += `<div class="slot-card ${members.length ? '' : 'empty-slot'}">
+      <div class="slot-head">
+        <span class="slot-time">${slotRange(slot.label)}</span>
+        <span>
+          <span class="slot-cnt">${members.length ? members.length + '명' : '수업 없음'}</span>
+          <button class="slot-del" title="시간대 삭제" onclick="deleteSlot('${sKey}','${slot.label}')">✕</button>
+        </span>
+      </div>
+      ${chips || '<div class="slot-none">배정된 학생이 없습니다</div>'}
+      <button class="slot-add" onclick="openPicker('${slot.label}')">＋ 학생 추가</button>
+    </div>`;
   });
+
+  grid.innerHTML = html || '<div class="empty">시간대를 추가해주세요</div>';
+}
+
+/* --- 선생님 추가 / 수정 / 삭제 --- */
+function addTeacher() {
+  const input = document.getElementById('newTeacherName');
+  const name = input.value.trim();
+  if (!name) { alert('선생님 이름을 입력하세요'); return; }
+  if (Object.values(teachersCache).some(t => t.name === name)) {
+    alert('이미 있는 이름입니다'); return;
+  }
+  const order = Object.keys(teachersCache).length;
+  fetch(DB_URL + '/teachers.json', { method: 'POST', body: JSON.stringify({ name, order }) })
+    .then(() => { input.value = ''; return loadClasses(); });
+}
+
+function renameTeacher(key) {
+  const oldName = teachersCache[key].name;
+  const newName = prompt('선생님 이름을 수정합니다', oldName);
+  if (newName === null) return;
+  const name = newName.trim();
+  if (!name || name === oldName) return;
+  if (Object.values(teachersCache).some((t, i) => t.name === name)) {
+    alert('이미 있는 이름입니다'); return;
+  }
+
+  // 배정된 학생들의 반 이름도 같이 바꿔준다
+  const updates = {};
+  Object.entries(studentsCache).forEach(([sKey, s]) => {
+    if ((s.className || '').startsWith(oldName + ' ')) {
+      updates[sKey + '/className'] = s.className.replace(oldName + ' ', name + ' ');
+    }
+  });
+
+  const n = Object.keys(updates).length;
+  if (n && !confirm(`${oldName} → ${name}\n\n배정된 학생 ${n}명의 반 이름도 함께 바뀝니다. 진행할까요?`)) return;
+
+  fetch(DB_URL + '/teachers/' + key + '/name.json', { method: 'PUT', body: JSON.stringify(name) })
+    .then(() => n
+      ? fetch(DB_URL + '/students.json', { method: 'PATCH', body: JSON.stringify(updates) })
+      : null)
+    .then(() => loadClasses());
+}
+
+function deleteTeacher(key) {
+  const name = teachersCache[key].name;
+  const n = countForTeacher(name);
+  const msg = n
+    ? `"${name}" 선생님을 삭제합니다.\n배정된 학생 ${n}명은 미배정으로 돌아갑니다. (학생 정보는 지워지지 않습니다)`
+    : `"${name}" 선생님을 삭제하시겠습니까?`;
+  if (!confirm(msg)) return;
+
+  const updates = {};
+  Object.entries(studentsCache).forEach(([sKey, s]) => {
+    if ((s.className || '').startsWith(name + ' ')) updates[sKey + '/className'] = null;
+  });
+
+  fetch(DB_URL + '/teachers/' + key + '.json', { method: 'DELETE' })
+    .then(() => n
+      ? fetch(DB_URL + '/students.json', { method: 'PATCH', body: JSON.stringify(updates) })
+      : null)
+    .then(() => { if (selectedTeacher === key) selectedTeacher = null; return loadClasses(); });
+}
+
+/* --- 시간대 추가 / 삭제 --- */
+function addSlot() {
+  const input = document.getElementById('newSlotLabel');
+  const label = input.value.trim();
+  if (!/^\d{1,2}:\d{2}$/.test(label)) {
+    alert('시간을 2:00 처럼 입력해주세요'); return;
+  }
+  if (Object.values(slotsCache).some(s => s.label === label)) {
+    alert('이미 있는 시간대입니다'); return;
+  }
+  fetch(DB_URL + '/timeslots.json', {
+    method: 'POST',
+    body: JSON.stringify({ label, order: Object.keys(slotsCache).length })
+  }).then(() => { input.value = ''; return loadClasses(); });
+}
+
+function deleteSlot(key, label) {
+  const affected = Object.values(studentsCache)
+    .filter(s => (s.className || '').endsWith(' ' + label)).length;
+  const msg = affected
+    ? `${label} 시간대를 삭제합니다.\n이 시간에 배정된 학생 ${affected}명(전체 선생님 기준)은 미배정으로 돌아갑니다.`
+    : `${label} 시간대를 삭제하시겠습니까?`;
+  if (!confirm(msg)) return;
+
+  const updates = {};
+  Object.entries(studentsCache).forEach(([sKey, s]) => {
+    if ((s.className || '').endsWith(' ' + label)) updates[sKey + '/className'] = null;
+  });
+
+  fetch(DB_URL + '/timeslots/' + key + '.json', { method: 'DELETE' })
+    .then(() => affected
+      ? fetch(DB_URL + '/students.json', { method: 'PATCH', body: JSON.stringify(updates) })
+      : null)
+    .then(() => loadClasses());
+}
+
+/* --- 학생 배정 --- */
+let pickSlotLabel = null;
+
+function openPicker(slotLabel) {
+  pickSlotLabel = slotLabel;
+  const tName = teachersCache[selectedTeacher].name;
+  document.getElementById('p_title').textContent = `${tName} ${slotRange(slotLabel)} 반에 추가`;
+  document.getElementById('p_search').value = '';
+  renderPickList();
+  document.getElementById('pickModal').classList.add('open');
+}
+
+function closePicker() {
+  document.getElementById('pickModal').classList.remove('open');
+  pickSlotLabel = null;
+}
+
+function renderPickList() {
+  const q = document.getElementById('p_search').value.trim().toLowerCase();
+  const target = makeClassName(teachersCache[selectedTeacher].name, pickSlotLabel);
+
+  const rows = Object.entries(studentsCache)
+    .filter(([, s]) => s.className !== target)
+    .filter(([, s]) => !q || (s.name || '').toLowerCase().includes(q))
+    // 미배정 학생을 위로
+    .sort((a, b) => {
+      const au = a[1].className ? 1 : 0, bu = b[1].className ? 1 : 0;
+      if (au !== bu) return au - bu;
+      return (a[1].name || '').localeCompare(b[1].name || '', 'ko');
+    });
+
+  let html = '';
+  rows.forEach(([key, s]) => {
+    html += `<div class="pick-row" onclick="assignStudent('${key}')">
+      <span><strong>${s.name}</strong>
+        <span class="gr" style="font-size:11px;color:var(--ink-soft);margin-left:6px;">${s.grade || ''} ${s.school || ''}</span>
+      </span>
+      <span class="cur">${s.className ? s.className : '미배정'}</span>
+    </div>`;
+  });
+
+  document.getElementById('p_list').innerHTML =
+    html || '<div class="empty">해당하는 학생이 없습니다</div>';
+}
+
+function assignStudent(studentKey) {
+  const cName = makeClassName(teachersCache[selectedTeacher].name, pickSlotLabel);
+  fetch(DB_URL + '/students/' + studentKey + '/className.json', {
+    method: 'PUT', body: JSON.stringify(cName)
+  }).then(() => { closePicker(); return loadClasses(); });
+}
+
+function unassignStudent(studentKey) {
+  fetch(DB_URL + '/students/' + studentKey + '/className.json', { method: 'DELETE' })
+    .then(() => loadClasses());
 }
 
 /* ---------- 모달 닫기 편의 기능 ---------- */
 document.getElementById('studentInfoModal').addEventListener('click', function(e){
   if (e.target === this) closeStudentInfo();
 });
+document.getElementById('pickModal').addEventListener('click', function(e){
+  if (e.target === this) closePicker();
+});
 document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape') closeStudentInfo();
+  if (e.key === 'Escape') { closeStudentInfo(); closePicker(); }
 });
 
 /* ---------- Init ---------- */
