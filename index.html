@@ -23,36 +23,36 @@
 
         .container {
             background: linear-gradient(135deg, #fff9fc 0%, #ffe6f0 100%);
-            padding: 0.5vh 0.5vw; border-radius: 20px; flex: 1 1 auto; min-width: 300px; max-width: 420px;
+            padding: 0.4vh 0.4vw; border-radius: 20px; flex: 1 1 auto; min-width: 300px; max-width: 420px;
             text-align: center; height: 100%; display: flex; flex-direction: column;
             box-shadow: 0 8px 32px rgba(255, 107, 157, 0.15); overflow-y: auto;
         }
-        h1 { color: #ff6b9d; font-size: clamp(18px, 2vw, 24px); margin-bottom: 0.15vh; font-weight: 900; letter-spacing: 1px; }
+        h1 { color: #ff6b9d; font-size: clamp(18px, 2vw, 24px); margin-bottom: 0.1vh; font-weight: 900; letter-spacing: 1px; }
         
-        .guide-box { background: linear-gradient(135deg, #fff0fa 0%, #ffe6f0 100%); border: 2px dashed #ffb8cf; border-radius: 12px; padding: 0.25vh 0.3vw; margin-bottom: 0.25vh; text-align: left; box-shadow: 0 4px 16px rgba(255, 107, 157, 0.1); }
-        .guide-title { color: #ff6b9d; font-weight: 900; font-size: clamp(10px, 0.9vw, 11px); margin-bottom: 0.1vh; text-align: center; }
-        .guide-row { display: flex; align-items: center; gap: 4px; padding: 0.1vh 0; font-size: clamp(9px, 0.85vw, 10px); color: #555; font-weight: 600; }
+        .guide-box { background: linear-gradient(135deg, #fff0fa 0%, #ffe6f0 100%); border: 2px dashed #ffb8cf; border-radius: 12px; padding: 0.2vh 0.3vw; margin-bottom: 0.2vh; text-align: left; box-shadow: 0 4px 16px rgba(255, 107, 157, 0.1); }
+        .guide-title { color: #ff6b9d; font-weight: 900; font-size: clamp(10px, 0.9vw, 11px); margin-bottom: 0.08vh; text-align: center; }
+        .guide-row { display: flex; align-items: center; gap: 4px; padding: 0.08vh 0; font-size: clamp(9px, 0.85vw, 10px); color: #555; font-weight: 600; }
         .guide-order { flex-shrink: 0; width: 1.2em; height: 1.2em; border-radius: 50%; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: #000; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: clamp(10px, 1vw, 11px); box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3); white-space: nowrap; line-height: 1; }
         .guide-text { flex: 1; }
         .guide-example { color: #ff6b9d; font-weight: 900; font-size: clamp(8px, 0.8vw, 9px); }
 
-        .display { background: linear-gradient(135deg, #fff5f8 0%, #ffe6f0 100%); padding: 0.7vh 0.4vw; font-size: clamp(20px, 2.4vw, 26px); margin: 0.25vh 0; border-radius: 12px; letter-spacing: 3px; border: 3px solid #ffb8cf; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.2); }
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3vh; margin: 0.3vh 0; }
+        .display { background: linear-gradient(135deg, #fff5f8 0%, #ffe6f0 100%); padding: 0.6vh 0.4vw; font-size: clamp(18px, 2.2vw, 24px); margin: 0.2vh 0; border-radius: 12px; letter-spacing: 3px; border: 3px solid #ffb8cf; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.2); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25vh; margin: 0.25vh 0; }
         button {
-            aspect-ratio: 1 / 1; font-size: clamp(14px, 1.8vw, 20px); border: none; background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
-            border-radius: 9px; cursor: pointer; font-weight: 700; transition: all 0.2s;
+            aspect-ratio: 1 / 1; font-size: clamp(13px, 1.6vw, 18px); border: none; background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
+            border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s;
             box-shadow: 0 4px 12px rgba(255, 107, 157, 0.15); display: flex; align-items: center; justify-content: center;
         }
         button:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(255, 107, 157, 0.25); }
         button:active { transform: scale(0.95); }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3vh; margin: 0.3vh 0; }
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25vh; margin: 0.25vh 0; }
         .btn-submit {
-            padding: 1.2vh 0; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: white; border: none;
-            font-size: clamp(12px, 1.4vw, 17px); font-weight: 900; cursor: pointer; border-radius: 9px;
+            padding: 1vh 0; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: white; border: none;
+            font-size: clamp(12px, 1.3vw, 16px); font-weight: 900; cursor: pointer; border-radius: 8px;
             transition: all 0.2s; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
         }
         .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255, 107, 157, 0.4); }
-        .admin { margin-top: 0.2vh; text-align: center; }
+        .admin { margin-top: 0.15vh; text-align: center; }
         .admin a { color: #7a4a8a; text-decoration: none; font-weight: 700; font-size: clamp(10px, 1vw, 12px); cursor: pointer; }
         .admin a:hover { text-decoration: underline; }
 
