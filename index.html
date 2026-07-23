@@ -157,6 +157,53 @@ h1{
   font-size:clamp(13px,1.4vw,18px);font-weight:700;
 }
 
+/* ===== 로그인 화면 ===== */
+#login{
+  position:fixed;inset:0;z-index:200;
+  background:linear-gradient(135deg,#fff5fb 0%,#f0e6ff 100%);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#login.hide{display:none;}
+.login-card{
+  background:linear-gradient(135deg,#fff9fc 0%,#ffe6f0 100%);
+  border-radius:28px;padding:40px 36px;
+  width:min(420px,92vw);
+  box-shadow:0 12px 40px rgba(255,107,157,.22);
+  text-align:center;
+}
+.login-card h2{
+  color:var(--coral);font-size:clamp(24px,4.5vh,34px);
+  font-weight:900;letter-spacing:1px;margin-bottom:6px;white-space:nowrap;
+}
+.login-card p{color:#b06a8a;font-weight:700;font-size:15px;margin-bottom:22px;}
+.login-card input{
+  width:100%;margin-bottom:12px;padding:14px 16px;
+  border:3px solid #ffb8cf;border-radius:14px;
+  background:#fff;font-family:inherit;font-weight:700;font-size:17px;
+  color:var(--plum);outline:none;
+}
+.login-card input:focus{border-color:var(--coral);}
+.login-btn{
+  width:100%;margin-top:6px;padding:15px 0;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#ff6b9d,#ff8fab);
+  color:#fff;font-family:inherit;font-weight:900;font-size:18px;
+  cursor:pointer;box-shadow:0 6px 18px rgba(255,107,157,.35);
+  transition:transform .15s;
+}
+.login-btn:hover{transform:translateY(-2px);}
+.login-err{color:#e2574c;font-weight:700;font-size:14px;margin-top:12px;min-height:20px;}
+
+.hidden{display:none !important;}
+
+.bottom-row{display:flex;gap:0.6vw;margin-top:1vh;}
+.bottom-row .admin{flex:1;margin-top:0;}
+.lock{
+  flex:0 0 auto;padding:1.1vh 1.2vw;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#ffd9e6,#ffc2d6);
+  color:#c2477a;font-family:inherit;font-weight:700;
+  font-size:clamp(13px,1.3vw,17px);cursor:pointer;
+}
+
 /* ===== 알림 모달 ===== */
 .modal{
   position:fixed;inset:0;background:rgba(0,0,0,.4);
@@ -182,7 +229,18 @@ h1{
 </head>
 <body>
 
-<div class="page-wrap">
+<div id="login">
+  <div class="login-card">
+    <h2>📚 레이첼영어학원</h2>
+    <p>출결패드를 사용하려면 로그인하세요</p>
+    <input id="loginId" type="text" placeholder="아이디" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <input id="loginPw" type="password" placeholder="비밀번호" autocomplete="off">
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div class="page-wrap hidden" id="app">
   <!-- 좌측: 출결 입력 -->
   <div class="container">
     <h1>📚 레이첼영어학원</h1>
@@ -215,7 +273,10 @@ h1{
       </div>
     </div>
 
-    <button class="admin" onclick="goAdmin()">🔐 관리자</button>
+    <div class="bottom-row">
+      <button class="admin" onclick="goAdmin()">🔐 관리자</button>
+      <button class="lock" onclick="logout()">🔒 로그아웃</button>
+    </div>
   </div>
 
   <!-- 우측: 출결 기록 -->
@@ -230,10 +291,36 @@ h1{
 
 <div class="modal" id="modal"><div class="modal-box" id="modalText"></div></div>
 
-<script>
-const DB = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+         setPersistence, browserLocalPersistence }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get, push, onValue }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* ================= Firebase 설정 ================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBeuZSxzylCd8UaS-WoSuIjz2nJ0hTM2u4",
+  authDomain: "academy-8829d.firebaseapp.com",
+  databaseURL: "https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "academy-8829d",
+  storageBucket: "academy-8829d.firebasestorage.app",
+  messagingSenderId: "144628924647",
+  appId: "1:144628924647:web:b4da558800046a707ee242"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+/* 아이디만 입력해도 되도록 뒤에 붙일 도메인 */
+const ID_DOMAIN = "@rachel.local";
+
 let pin = '';
 let students = null;
+let authed = false;
+let unsub = null;
+let watchingDate = '';
 
 /* ---------- 입력 ---------- */
 function render(){
@@ -271,20 +358,21 @@ function showModal(text, ms){
 /* ---------- 학생 조회 ---------- */
 async function loadStudents(force){
   if(students && !force) return students;
-  const res = await fetch(DB + '/students.json');
-  students = (await res.json()) || {};
+  const snap = await get(ref(db, 'students'));
+  students = snap.val() || {};
   return students;
 }
 function findByPin(list, code){
   for(const id in list){
-    const s = list[id] || {};
-    if(String(s.pin || '').trim() === code) return {id:id, ...s};
+    const st = list[id] || {};
+    if(String(st.pin || '').trim() === code) return Object.assign({id:id}, st);
   }
   return null;
 }
 
 /* ---------- 출결 등록 ---------- */
 async function submit(type){
+  if(!authed) return;
   if(pin.length !== 5){ showModal('❗ 번호 5자리를 입력해 주세요', 1000); return; }
   const code = pin;
   try{
@@ -293,35 +381,38 @@ async function submit(type){
     if(!stu){ list = await loadStudents(true); stu = findByPin(list, code); }
     if(!stu){ showModal('❌ 등록되지 않은 번호입니다', 1000); clearPin(); return; }
 
-    await fetch(DB + '/attendance/' + todayKey() + '.json', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        name: stu.name,
-        sid: stu.id,
-        type: type,
-        time: nowTime(),
-        ts: Date.now()
-      })
+    await push(ref(db, 'attendance/' + todayKey()), {
+      name: stu.name,
+      sid:  stu.id,
+      type: type,
+      time: nowTime(),
+      ts:   Date.now()
     });
 
     showModal(type === 'checkin'
       ? '✅ ' + stu.name + '님이 등원하였습니다'
       : '🚪 ' + stu.name + '님이 하원하였습니다', 500);
     clearPin();
-    loadRecords();
   }catch(e){
+    console.error(e);
     showModal('⚠️ 연결에 실패했습니다. 다시 시도해 주세요', 1200);
     clearPin();
   }
 }
 
-/* ---------- 기록 목록 ---------- */
-async function loadRecords(){
+/* ---------- 기록 목록 (실시간) ---------- */
+function watchRecords(){
+  const key = todayKey();
+  if(unsub && watchingDate === key) return;
+  if(unsub){ unsub(); unsub = null; }
+  watchingDate = key;
+
+  document.getElementById('recordDate').textContent =
+    new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+
   const box = document.getElementById('recordList');
-  try{
-    const res = await fetch(DB + '/attendance/' + todayKey() + '.json');
-    const data = (await res.json()) || {};
+  unsub = onValue(ref(db, 'attendance/' + key), snap=>{
+    const data = snap.val() || {};
     const rows = Object.keys(data).map(k=>data[k]).filter(Boolean);
     rows.sort((a,b)=>((b.ts||0)-(a.ts||0)) || (timeToMin(b.time)-timeToMin(a.time)));
 
@@ -337,33 +428,95 @@ async function loadRecords(){
         + '<span class="record-time">' + (r.time||'') + '</span>'
         + '</div>';
     }).join('');
+  }, err=>{
+    console.error(err);
+    box.innerHTML = '<div class="record-empty">기록을 불러올 권한이 없습니다</div>';
+  });
+}
+
+/* ---------- 로그인 ---------- */
+function errMessage(code){
+  if(code === 'auth/invalid-email')       return '아이디 형식이 올바르지 않습니다';
+  if(code === 'auth/user-not-found')      return '등록되지 않은 아이디입니다';
+  if(code === 'auth/wrong-password')      return '비밀번호가 올바르지 않습니다';
+  if(code === 'auth/invalid-credential')  return '아이디 또는 비밀번호가 올바르지 않습니다';
+  if(code === 'auth/too-many-requests')   return '시도가 너무 많습니다. 잠시 후 다시 해주세요';
+  if(code === 'auth/network-request-failed') return '인터넷 연결을 확인해 주세요';
+  return '로그인에 실패했습니다 (' + code + ')';
+}
+
+async function doLogin(){
+  const idRaw = document.getElementById('loginId').value.trim();
+  const pw    = document.getElementById('loginPw').value;
+  const errEl = document.getElementById('loginErr');
+  if(!idRaw || !pw){ errEl.textContent = '아이디와 비밀번호를 입력해 주세요'; return; }
+
+  const email = idRaw.includes('@') ? idRaw : idRaw + ID_DOMAIN;
+  errEl.textContent = '로그인 중…';
+  try{
+    await setPersistence(auth, browserLocalPersistence);
+    await signInWithEmailAndPassword(auth, email, pw);
+    errEl.textContent = '';
   }catch(e){
-    box.innerHTML = '<div class="record-empty">기록을 불러오지 못했습니다</div>';
+    errEl.textContent = errMessage(e.code || '');
+    document.getElementById('loginPw').value = '';
+    document.getElementById('loginPw').focus();
   }
 }
 
-/* ---------- 관리자 ---------- */
-function goAdmin(){
-  const p = prompt('관리자 비밀번호를 입력하세요');
-  if(p === null) return;
-  if(p === '1234') location.href = '/admin/';
-  else showModal('❌ 비밀번호가 올바르지 않습니다', 900);
+function logout(){
+  if(!confirm('로그아웃할까요? 다시 사용하려면 로그인이 필요합니다.')) return;
+  signOut(auth);
 }
 
-/* ---------- 키보드 입력 ---------- */
+/* ---------- 로그인 상태 감시 ---------- */
+onAuthStateChanged(auth, user=>{
+  if(user){
+    authed = true;
+    document.getElementById('login').classList.add('hide');
+    document.getElementById('app').classList.remove('hidden');
+    render();
+    loadStudents();
+    watchRecords();
+  }else{
+    authed = false;
+    if(unsub){ unsub(); unsub = null; watchingDate = ''; }
+    students = null;
+    clearPin();
+    document.getElementById('loginPw').value = '';
+    document.getElementById('loginErr').textContent = '';
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('login').classList.remove('hide');
+  }
+});
+
+/* 자정이 지나면 날짜 자동 전환 */
+setInterval(()=>{ if(authed) watchRecords(); }, 60000);
+
+/* ---------- 관리자 ---------- */
+function goAdmin(){ location.href = '/admin/'; }
+
+/* ---------- 키보드 ---------- */
 document.addEventListener('keydown', e=>{
+  if(!authed){
+    if(e.key === 'Enter') doLogin();
+    return;
+  }
   if(e.key >= '0' && e.key <= '9') press(e.key);
   else if(e.key === 'Backspace') del();
   else if(e.key === 'Enter') submit('checkin');
 });
 
-/* ---------- 초기화 ---------- */
-document.getElementById('recordDate').textContent =
-  new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+/* ---------- 인라인 onclick 연결 ---------- */
+window.press    = press;
+window.del      = del;
+window.submit   = submit;
+window.doLogin  = doLogin;
+window.logout   = logout;
+window.goAdmin  = goAdmin;
+
 render();
-loadStudents();
-loadRecords();
-setInterval(loadRecords, 15000);
 </script>
+
 </body>
 </html>
