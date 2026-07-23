@@ -214,8 +214,16 @@
     padding:6px;font-size:12px;font-weight:700;color:var(--ink-soft);cursor:pointer;margin-top:3px;}
   .slot-add:hover{border-color:#8fa8ff;color:#2a53d8;background:#f7f9ff;}
   .slot-add-row{display:flex;gap:8px;margin-top:16px;align-items:center;}
-  .slot-add-row input{width:130px;margin:0;}
+  .slot-add-row input{margin:0;}
+  .slot-add-row #newSlotLabel{width:96px;}
+  .slot-add-row #newSlotSpan{width:74px;}
+  .slot-add-row .unit{font-size:13px;color:var(--ink-soft);font-weight:700;margin-left:-3px;}
   .slot-add-row .btn{margin-top:0;}
+  .slot-edit{background:none;border:none;cursor:pointer;color:#ccd;font-size:11px;
+    font-weight:800;padding:0 3px;}
+  .slot-edit:hover{color:#2a53d8;}
+  .slot-card.mid-card{border-color:#dcd0f5;background:#fbf9ff;border-style:solid;}
+  .slot-card.mid-card .slot-time{color:#5b3fa8;}
 
   /* --- 학생 고르기 --- */
   .pick-list{max-height:320px;overflow-y:auto;margin-bottom:14px;}
@@ -395,7 +403,9 @@
             <h2 id="slotPanelTitle">시간표</h2>
             <div id="slotGrid"></div>
             <div class="slot-add-row">
-              <input type="text" id="newSlotLabel" placeholder="예: 6:00">
+              <input type="text" id="newSlotLabel" placeholder="2:00">
+              <input type="number" id="newSlotSpan" value="40" min="5" max="240">
+              <span class="unit">분</span>
               <button class="btn ghost" onclick="addSlot()">시간대 추가</button>
             </div>
           </div>
@@ -761,6 +771,8 @@ function openStudentModal(key) {
           const sel = cn === s.className ? ' selected' : '';
           optionsHtml += `<option value="${cn}"${sel}>${cn}</option>`;
         });
+        const mid = t.name + ' ' + MID_LABEL;
+        optionsHtml += `<option value="${mid}"${mid === s.className ? ' selected' : ''}>${mid} (중학생반)</option>`;
       });
       // 목록에 없는 예전 반 이름도 유지
       if (s.className && !optionsHtml.includes(`value="${s.className}"`)) {
@@ -1032,7 +1044,8 @@ async function submitBulk() {
 
 /* ---------- 선생님 / 시간대 / 반 배정 ---------- */
 const DEFAULT_SLOTS = ['2:00','2:40','3:20','4:00','4:40','5:20'];
-const SLOT_SPAN = 40; // 분
+const DEFAULT_SPAN = 40;      // 새 시간대 기본 길이(분)
+const MID_LABEL = '중등';      // 시간 없는 중학생반
 
 let teachersCache = {};
 let slotsCache = {};
@@ -1074,11 +1087,11 @@ function makeClassName(teacherName, slotLabel) {
   return teacherName + ' ' + slotLabel;
 }
 
-// 시간 라벨 -> "2:00 ~ 2:40"
-function slotRange(label) {
+// 시간 라벨 + 길이 -> "2:00 ~ 2:40"
+function slotRange(label, span) {
   const m = label.match(/^(\d{1,2}):(\d{2})$/);
   if (!m) return label;
-  let h = +m[1], mi = +m[2] + SLOT_SPAN;
+  let h = +m[1], mi = +m[2] + (span || DEFAULT_SPAN);
   h += Math.floor(mi / 60); mi = mi % 60;
   if (h > 12) h -= 12;
   return label + ' ~ ' + h + ':' + String(mi).padStart(2, '0');
@@ -1131,7 +1144,7 @@ function ensureDefaults() {
     // 시간대가 없으면 기본 6개
     if (!slots || !Object.keys(slots).length) {
       const payload = {};
-      DEFAULT_SLOTS.forEach((lb, i) => { payload['s' + i] = { label: lb, order: i }; });
+      DEFAULT_SLOTS.forEach((lb, i) => { payload['s' + i] = { label: lb, span: DEFAULT_SPAN, order: i }; });
       jobs.push(fetch(DB_URL + '/timeslots.json', {
         method: 'PATCH', body: JSON.stringify(payload)
       }));
@@ -1209,30 +1222,34 @@ function renderSlots() {
   title.innerHTML = `${tName} 선생님 시간표
     <span style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:8px;">이름을 누르면 학생 정보가 열립니다</span>`;
 
-  let html = '';
-  sortedSlots().forEach(([sKey, slot]) => {
-    const cName = makeClassName(tName, slot.label);
+  const chipsFor = (cName) => {
     const members = Object.entries(studentsCache)
       .filter(([, s]) => s.className === cName)
       .sort((a, b) => (a[1].name || '').localeCompare(b[1].name || '', 'ko'));
-
     let chips = '';
     members.forEach(([stuKey, s]) => {
       chips += `<div class="stu-chip">
         <span>
           <span class="nm" onclick="openStudentInfo('${stuKey}')">${s.name}</span>
           <span class="gr">${s.grade || ''}</span>
-          ${isMiddleOrUp(s.grade) ? '<span class="mid">개인</span>' : ''}
+          ${isMiddleOrUp(s.grade) ? '<span class="mid">중고</span>' : ''}
         </span>
         <button class="rm" title="이 반에서 빼기" onclick="unassignStudent('${stuKey}')">✕</button>
       </div>`;
     });
+    return { chips, count: members.length };
+  };
 
-    html += `<div class="slot-card ${members.length ? '' : 'empty-slot'}">
+  let html = '';
+  sortedSlots().forEach(([sKey, slot]) => {
+    const { chips, count } = chipsFor(makeClassName(tName, slot.label));
+    html += `<div class="slot-card ${count ? '' : 'empty-slot'}">
       <div class="slot-head">
-        <span class="slot-time">${slotRange(slot.label)}</span>
+        <span class="slot-time">${slotRange(slot.label, slot.span)}
+          <button class="slot-edit" title="시간 수정" onclick="editSlot('${sKey}')">수정</button>
+        </span>
         <span>
-          <span class="slot-cnt">${members.length ? members.length + '명' : '수업 없음'}</span>
+          <span class="slot-cnt">${count ? count + '명' : '수업 없음'}</span>
           <button class="slot-del" title="시간대 삭제" onclick="deleteSlot('${sKey}','${slot.label}')">✕</button>
         </span>
       </div>
@@ -1241,7 +1258,18 @@ function renderSlots() {
     </div>`;
   });
 
-  grid.innerHTML = html || '<div class="empty">시간대를 추가해주세요</div>';
+  // 선생님마다 항상 있는 중학생반 (시간 없음)
+  const mid = chipsFor(makeClassName(tName, MID_LABEL));
+  html += `<div class="slot-card mid-card">
+    <div class="slot-head">
+      <span class="slot-time">중학생반</span>
+      <span class="slot-cnt">${mid.count ? mid.count + '명' : '시간 개별 조율'}</span>
+    </div>
+    ${mid.chips || '<div class="slot-none">배정된 학생이 없습니다</div>'}
+    <button class="slot-add" onclick="openPicker('${MID_LABEL}')">＋ 학생 추가</button>
+  </div>`;
+
+  grid.innerHTML = html;
 }
 
 /* --- 선생님 추가 / 수정 / 삭제 --- */
@@ -1308,17 +1336,65 @@ function deleteTeacher(key) {
 /* --- 시간대 추가 / 삭제 --- */
 function addSlot() {
   const input = document.getElementById('newSlotLabel');
+  const spanInput = document.getElementById('newSlotSpan');
   const label = input.value.trim();
+  const span = parseInt(spanInput.value, 10);
+
   if (!/^\d{1,2}:\d{2}$/.test(label)) {
-    alert('시간을 2:00 처럼 입력해주세요'); return;
+    alert('시작 시간을 2:00 처럼 입력해주세요'); return;
+  }
+  if (label === MID_LABEL) { alert('중학생반은 이미 아래에 있습니다'); return; }
+  if (!span || span < 5 || span > 240) {
+    alert('수업 시간은 5분에서 240분 사이로 입력해주세요'); return;
   }
   if (Object.values(slotsCache).some(s => s.label === label)) {
     alert('이미 있는 시간대입니다'); return;
   }
   fetch(DB_URL + '/timeslots.json', {
     method: 'POST',
-    body: JSON.stringify({ label, order: Object.keys(slotsCache).length })
-  }).then(() => { input.value = ''; return loadClasses(); });
+    body: JSON.stringify({ label, span, order: Object.keys(slotsCache).length })
+  }).then(() => { input.value = ''; spanInput.value = DEFAULT_SPAN; return loadClasses(); });
+}
+
+function editSlot(key) {
+  const slot = slotsCache[key];
+  if (!slot) return;
+
+  const raw = prompt('시작 시간을 입력하세요 (예: 2:00)', slot.label);
+  if (raw === null) return;
+  const label = raw.trim();
+  if (!/^\d{1,2}:\d{2}$/.test(label)) { alert('시간을 2:00 처럼 입력해주세요'); return; }
+  if (label !== slot.label && Object.values(slotsCache).some(s => s.label === label)) {
+    alert('이미 있는 시간대입니다'); return;
+  }
+
+  const rawSpan = prompt('수업 시간을 분 단위로 입력하세요', slot.span || DEFAULT_SPAN);
+  if (rawSpan === null) return;
+  const span = parseInt(rawSpan, 10);
+  if (!span || span < 5 || span > 240) {
+    alert('수업 시간은 5분에서 240분 사이로 입력해주세요'); return;
+  }
+
+  // 시작 시간이 바뀌면 배정된 학생들의 반 이름도 함께 바꾼다
+  const updates = {};
+  if (label !== slot.label) {
+    Object.entries(studentsCache).forEach(([sKey, st]) => {
+      if ((st.className || '').endsWith(' ' + slot.label)) {
+        updates[sKey + '/className'] =
+          st.className.slice(0, -slot.label.length) + label;
+      }
+    });
+  }
+  const n = Object.keys(updates).length;
+  if (n && !confirm(`${slot.label} → ${label}\n\n이 시간에 배정된 학생 ${n}명(전체 선생님 기준)의 반 이름도 함께 바뀝니다. 진행할까요?`)) return;
+
+  fetch(DB_URL + '/timeslots/' + key + '.json', {
+    method: 'PATCH', body: JSON.stringify({ label, span })
+  })
+    .then(() => n
+      ? fetch(DB_URL + '/students.json', { method: 'PATCH', body: JSON.stringify(updates) })
+      : null)
+    .then(() => loadClasses());
 }
 
 function deleteSlot(key, label) {
@@ -1347,7 +1423,9 @@ let pickSlotLabel = null;
 function openPicker(slotLabel) {
   pickSlotLabel = slotLabel;
   const tName = teachersCache[selectedTeacher].name;
-  document.getElementById('p_title').textContent = `${tName} ${slotRange(slotLabel)} 반에 추가`;
+  const slotObj = Object.values(slotsCache).find(s => s.label === slotLabel);
+  const shown = slotLabel === MID_LABEL ? '중학생반' : slotRange(slotLabel, slotObj && slotObj.span);
+  document.getElementById('p_title').textContent = `${tName} ${shown}에 추가`;
   document.getElementById('p_search').value = '';
   renderPickList();
   document.getElementById('pickModal').classList.add('open');
