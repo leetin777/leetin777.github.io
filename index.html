@@ -64,7 +64,6 @@
         .modal-text { font-size: clamp(26px, 3.6vw, 44px); color: #555; margin-bottom: 2vh; line-height: 1.4; font-weight: 700; }
         .modal-time { font-size: clamp(18px, 2vw, 28px); color: #999; }
 
-        /* ---- Live record panel ---- */
         .record-panel {
             background: linear-gradient(135deg, #fff0f8 0%, #ffe6f0 100%);
             padding: 3vh 2.2vw; border-radius: 28px; flex: 1 1 380px; max-width: 460px; text-align: left; height: 100%;
@@ -84,71 +83,6 @@
         .record-tag.checkin { background: linear-gradient(135deg, #d4f5e8, #a8e6d5); color: #1b7a5a; }
         .record-tag.checkout { background: linear-gradient(135deg, #f5d4d4, #f0a8a8); color: #7a2020; }
         .record-empty { text-align: center; color: #999; padding: 5vh 10px; font-size: clamp(14px, 1.5vw, 18px); font-weight: 600; }
-
-        @media (max-width: 850px) {
-            body { align-items: flex-start; }
-            .page-wrap { flex-direction: column; align-items: center; height: auto; }
-            .container, .record-panel { flex: 1 1 auto; max-width: 600px; width: 100%; height: auto; }
-            .record-panel { max-height: 50vh; }
-        }
-    </style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; }
-        body {
-            font-family: Arial, sans-serif; background: #f5f5f5;
-            padding: 2vh 2vw; min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .page-wrap {
-            display: flex; gap: 2.5vw; width: 100%; max-width: 1400px; height: 94vh;
-            align-items: stretch; flex-wrap: wrap; justify-content: center;
-        }
-
-        .container {
-            background: white; padding: 3vh 3vw; border-radius: 16px; flex: 1 1 560px; max-width: 680px;
-            text-align: center; height: 100%; display: flex; flex-direction: column;
-        }
-        h1 { color: #ff6b9d; font-size: clamp(32px, 4vw, 52px); margin-bottom: 1.5vh; }
-        .container > p { font-size: clamp(16px, 1.6vw, 22px); color: #666; }
-
-        .guide-box { background: #fff5f8; border: 2px dashed #ffb8cf; border-radius: 12px; padding: 1.8vh 1.6vw; margin-bottom: 1.5vh; text-align: left; }
-        .guide-title { color: #ff6b9d; font-weight: bold; font-size: clamp(15px, 1.6vw, 19px); margin-bottom: 1vh; text-align: center; }
-        .guide-row { display: flex; align-items: center; gap: 10px; padding: 0.7vh 0; font-size: clamp(14px, 1.4vw, 18px); color: #444; }
-        .guide-order { flex-shrink: 0; width: 2.2em; height: 2.2em; border-radius: 50%; background: #ff6b9d; color: white; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: clamp(13px, 1.3vw, 16px); }
-        .guide-text { flex: 1; }
-        .guide-example { color: #ff6b9d; font-weight: bold; }
-        .display { background: #f0f0f0; padding: 3vh 2vw; font-size: clamp(40px, 5vw, 64px); margin: 2.5vh 0; border-radius: 14px; letter-spacing: 4px; }
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.4vh 1.2vw; margin: 2.5vh 0; }
-        button { padding: 2.6vh 0; font-size: clamp(20px, 2.4vw, 30px); border: 2px solid #ddd; background: white; border-radius: 10px; cursor: pointer; }
-        button:hover { background: #f0f0f0; }
-        button:active { transform: scale(0.95); }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2vw; margin: 2.5vh 0; }
-        .btn-submit { padding: 2.8vh 0; background: #ff6b9d; color: white; border: none; font-size: clamp(20px, 2.4vw, 28px); font-weight: bold; cursor: pointer; border-radius: 10px; }
-        .btn-submit:hover { background: #ff5a8b; }
-        .admin { margin-top: 2.5vh; }
-        .admin button { width: 100%; padding: 1.8vh 0; background: #999; color: white; font-weight: bold; font-size: clamp(16px, 1.6vw, 20px); }
-        .admin button:hover { background: #777; }
-
-        .modal { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-box { background: white; padding: 5vh 5vw; border-radius: 24px; text-align: center; min-width: 400px; }
-        .modal-icon { font-size: clamp(60px, 8vw, 100px); margin-bottom: 2vh; }
-        .modal-name { font-size: clamp(36px, 5vw, 60px); font-weight: bold; color: #ff6b9d; margin-bottom: 2vh; }
-        .modal-text { font-size: clamp(26px, 3.6vw, 44px); color: #333; margin-bottom: 2vh; line-height: 1.4; }
-        .modal-time { font-size: clamp(18px, 2vw, 28px); color: #999; }
-
-        /* ---- Live record panel ---- */
-        .record-panel { background: white; padding: 3vh 2.2vw; border-radius: 16px; flex: 1 1 380px; max-width: 460px; text-align: left; height: 100%; display: flex; flex-direction: column; }
-        .record-panel h2 { color: #ff6b9d; font-size: clamp(22px, 2.4vw, 30px); margin-bottom: 0.6vh; }
-        .record-sub { color: #999; font-size: clamp(13px, 1.3vw, 16px); margin-bottom: 2vh; }
-        .record-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.2vh; }
-        .record-row { display: flex; align-items: center; justify-content: space-between; padding: 1.8vh 1.2vw; border-radius: 10px; background: #fafafa; font-size: clamp(16px, 1.7vw, 20px); }
-        .record-row .rname { font-weight: bold; color: #333; }
-        .record-row .rtime { color: #999; font-size: clamp(13px, 1.3vw, 16px); }
-        .record-tag { display: inline-block; padding: 0.5vh 1.2vw; border-radius: 20px; font-size: clamp(12px, 1.2vw, 15px); font-weight: bold; margin-right: 10px; white-space: nowrap; }
-        .record-tag.checkin { background: #e6f7ee; color: #2fae66; }
-        .record-tag.checkout { background: #fdeceb; color: #e2574c; }
-        .record-empty { text-align: center; color: #999; padding: 5vh 10px; font-size: clamp(14px, 1.5vw, 18px); }
 
         @media (max-width: 850px) {
             body { align-items: flex-start; }
@@ -203,7 +137,7 @@
 
             <div class="actions">
                 <button class="btn-submit" onclick="checkIn()">등원</button>
-                <button class="btn-submit" onclick="checkOut()" style="background: #6c757d;">하원</button>
+                <button class="btn-submit" onclick="checkOut()" style="background: linear-gradient(135deg, #9b8dbe, #b5a5d0);">하원</button>
             </div>
 
             <div class="admin">
@@ -356,7 +290,6 @@
             }, 300);
         }
 
-        /* ---------- Live record panel (오늘 기록, 최신순) ---------- */
         function loadRecords() {
             const today = new Date().toISOString().split('T')[0];
 
@@ -364,13 +297,8 @@
                 .then(res => res.json())
                 .then(data => {
                     const records = data || {};
-                    const list = Object.values(records);
-
-                    // 최신 기록이 위로 오도록 정렬 (Firebase push key는 생성 순서를 반영)
                     const keys = Object.keys(records);
-                    const sorted = keys
-                        .map(k => records[k])
-                        .reverse();
+                    const sorted = keys.map(k => records[k]).reverse();
 
                     if (sorted.length === 0) {
                         document.getElementById('recordList').innerHTML = '<div class="record-empty">오늘 기록이 아직 없습니다</div>';
@@ -399,7 +327,6 @@
             updateDisplay();
             document.getElementById('recordDate').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
             loadRecords();
-            // 다른 기기에서 찍은 기록도 반영되도록 15초마다 자동 새로고침
             setInterval(loadRecords, 15000);
         });
     </script>
