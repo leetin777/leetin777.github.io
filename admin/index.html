@@ -174,9 +174,6 @@
       <div class="nav-item" data-page="wordtest">
         <span class="nav-icon">📄</span><span>단어 시험</span>
       </div>
-      <div class="nav-item" data-page="attendance">
-        <span class="nav-icon">📋</span><span>출결 기록</span>
-      </div>
     </nav>
     <div class="sidebar-footer">
       <a href="https://leetin777.github.io/">← 출석 입력 화면</a>
@@ -345,27 +342,6 @@
         </div>
       </div>
 
-      <!-- ---------- Attendance ---------- -->
-      <div class="page" id="page-attendance">
-        <div class="card">
-          <div class="toolbar">
-            <div class="form-group"><label>날짜</label><input type="date" id="date"></div>
-            <div class="form-group">
-              <label>구분</label>
-              <select id="mode">
-                <option value="checkin">등원</option>
-                <option value="checkout">하원</option>
-              </select>
-            </div>
-          </div>
-          <table>
-            <thead><tr><th>이름</th><th>구분</th><th>시간</th></tr></thead>
-            <tbody id="attTable"></tbody>
-          </table>
-          <div id="attEmpty" class="empty" style="display:none;">기록이 없습니다</div>
-        </div>
-      </div>
-
     </div>
   </div>
 </div>
@@ -401,7 +377,7 @@ let classesCache = {};
 /* ---------- Navigation ---------- */
 const pageTitles = {
   dashboard: '대시보드', students: '학생 관리', classes: '클래스 관리', homework: '숙제 관리',
-  wordtest: '단어 시험', attendance: '출결 기록'
+  wordtest: '단어 시험'
 };
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
@@ -411,7 +387,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
     const key = item.dataset.page;
     document.getElementById('page-' + key).classList.add('active');
     document.getElementById('pageTitle').textContent = pageTitles[key];
-    if (key === 'attendance') loadAttendance();
     if (key === 'dashboard') loadDashboard();
     if (key === 'classes') loadClasses();
     document.getElementById('sidebar').classList.remove('open');
@@ -925,31 +900,6 @@ function loadClasses() {
   });
 }
 
-/* ---------- Attendance ---------- */
-function loadAttendance() {
-  const date = document.getElementById('date').value;
-  const mode = document.getElementById('mode').value;
-
-  fetch(DB_URL + '/attendance/' + date + '.json')
-    .then(res => res.json())
-    .then(data => {
-      const records = data || {};
-      let rows = '';
-      for (let key in records) {
-        const r = records[key];
-        if (r.type === mode) {
-          rows += `<tr>
-            <td><strong>${r.name}</strong></td>
-            <td><span class="tag ${r.type}">${r.type === 'checkin' ? '등원' : '하원'}</span></td>
-            <td>${r.time}</td>
-          </tr>`;
-        }
-      }
-      document.getElementById('attTable').innerHTML = rows;
-      document.getElementById('attEmpty').style.display = rows ? 'none' : 'block';
-    });
-}
-
 /* ---------- Dashboard ---------- */
 function loadDashboard() {
   const today = new Date().toISOString().slice(0,10);
@@ -979,9 +929,6 @@ function loadDashboard() {
 
 /* ---------- Init ---------- */
 window.addEventListener('load', () => {
-  document.getElementById('date').valueAsDate = new Date();
-  document.getElementById('date').addEventListener('change', loadAttendance);
-  document.getElementById('mode').addEventListener('change', loadAttendance);
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
   loadDashboard();
 });
