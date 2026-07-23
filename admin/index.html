@@ -933,5 +933,158 @@ window.addEventListener('load', () => {
   loadDashboard();
 });
 </script>
+  <!-- ================================================================
+     🔐 관리자 로그인 + DB 인증  —  </body> 바로 윗줄에 통째로 붙여넣으세요
+     기존 코드는 수정할 필요가 없습니다.
+     ================================================================ -->
+
+<style id="gateHide">
+  body > *:not(#authGate){ visibility:hidden !important; }
+</style>
+
+<div id="authGate" style="
+  position:fixed; inset:0; z-index:99999;
+  background:linear-gradient(135deg,#fff5fb 0%,#f0e6ff 100%);
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  font-family:'Pretendard','Apple SD Gothic Neo',Arial,sans-serif;">
+  <div style="
+    background:#fff; border-radius:16px; padding:38px 34px; width:min(400px,92vw);
+    box-shadow:0 12px 40px rgba(122,46,77,.18); text-align:center;">
+    <div style="font-size:15px;font-weight:800;color:#7a2e4d;">🎨 레이첼영어학원</div>
+    <div style="font-size:12px;color:#8a7a85;margin:3px 0 24px;">관리자 시스템</div>
+
+    <input id="gateId" type="text" placeholder="아이디" autocomplete="off" autocapitalize="off" spellcheck="false"
+      style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:12px 12px;border:1px solid #ecdfe5;
+             border-radius:8px;background:#fdfbfc;font-family:inherit;font-size:14px;color:#2b2230;outline:none;">
+    <input id="gatePw" type="password" placeholder="비밀번호" autocomplete="off"
+      style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:12px 12px;border:1px solid #ecdfe5;
+             border-radius:8px;background:#fdfbfc;font-family:inherit;font-size:14px;color:#2b2230;outline:none;">
+
+    <button id="gateBtn"
+      style="width:100%;margin-top:6px;padding:12px 0;border:none;border-radius:8px;
+             background:#ff6b9d;color:#fff;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;">로그인</button>
+
+    <div id="gateErr" style="color:#e2574c;font-weight:700;font-size:12.5px;margin-top:12px;min-height:18px;"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+         setPersistence, browserLocalPersistence }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBeuZSxzylCd8UaS-WoSuIjz2nJ0hTM2u4",
+  authDomain: "academy-8829d.firebaseapp.com",
+  databaseURL: "https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "academy-8829d",
+  storageBucket: "academy-8829d.firebasestorage.app",
+  messagingSenderId: "144628924647",
+  appId: "1:144628924647:web:b4da558800046a707ee242"
+};
+
+const DB_PREFIX = "https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app";
+const ID_DOMAIN = "@rachel.local";   // 아이디만 입력해도 되도록 자동으로 붙는 부분
+
+const gateApp  = initializeApp(firebaseConfig, "adminGate");
+const gateAuth = getAuth(gateApp);
+
+let currentUser = null;
+let waiters = [];
+
+/* ---- 로그인될 때까지 기다렸다가 DB 요청에 인증 토큰을 자동으로 붙임 ---- */
+function waitAuth(){
+  if(currentUser) return Promise.resolve(currentUser);
+  return new Promise(resolve => waiters.push(resolve));
+}
+
+const nativeFetch = window.fetch.bind(window);
+window.fetch = async function(input, init){
+  if(typeof input === 'string' && input.startsWith(DB_PREFIX)){
+    await waitAuth();
+    try{
+      const token = await currentUser.getIdToken();
+      input += (input.includes('?') ? '&' : '?') + 'auth=' + encodeURIComponent(token);
+    }catch(e){ console.error('토큰 발급 실패', e); }
+  }
+  return nativeFetch(input, init);
+};
+
+/* ---- 로그인 처리 ---- */
+const gate  = document.getElementById('authGate');
+const errEl = document.getElementById('gateErr');
+
+function msg(code){
+  if(code === 'auth/invalid-email')           return '아이디 형식이 올바르지 않습니다';
+  if(code === 'auth/user-not-found')          return '등록되지 않은 아이디입니다';
+  if(code === 'auth/wrong-password')          return '비밀번호가 올바르지 않습니다';
+  if(code === 'auth/invalid-credential')      return '아이디 또는 비밀번호가 올바르지 않습니다';
+  if(code === 'auth/too-many-requests')       return '시도가 너무 많습니다. 잠시 후 다시 해주세요';
+  if(code === 'auth/network-request-failed')  return '인터넷 연결을 확인해 주세요';
+  return '로그인에 실패했습니다 (' + code + ')';
+}
+
+async function login(){
+  const idRaw = document.getElementById('gateId').value.trim();
+  const pw    = document.getElementById('gatePw').value;
+  if(!idRaw || !pw){ errEl.textContent = '아이디와 비밀번호를 입력해 주세요'; return; }
+  const email = idRaw.includes('@') ? idRaw : idRaw + ID_DOMAIN;
+  errEl.textContent = '로그인 중…';
+  try{
+    await setPersistence(gateAuth, browserLocalPersistence);
+    await signInWithEmailAndPassword(gateAuth, email, pw);
+    errEl.textContent = '';
+  }catch(e){
+    errEl.textContent = msg(e.code || '');
+    document.getElementById('gatePw').value = '';
+    document.getElementById('gatePw').focus();
+  }
+}
+
+document.getElementById('gateBtn').addEventListener('click', login);
+gate.addEventListener('keydown', e=>{ if(e.key === 'Enter') login(); });
+
+/* ---- 로그인 상태 감시 ---- */
+onAuthStateChanged(gateAuth, user=>{
+  currentUser = user;
+  if(user){
+    waiters.forEach(f=>f(user));
+    waiters = [];
+    const h = document.getElementById('gateHide');
+    if(h) h.remove();
+    gate.style.display = 'none';
+    addLogoutButton();
+    /* 로그인 전에 시작된 화면을 한 번 새로 고침 */
+    setTimeout(()=>{ if(typeof window.loadDashboard === 'function') window.loadDashboard(); }, 200);
+  }else{
+    gate.style.display = 'flex';
+    if(!document.getElementById('gateHide')){
+      const st = document.createElement('style');
+      st.id = 'gateHide';
+      st.textContent = 'body > *:not(#authGate){ visibility:hidden !important; }';
+      document.head.appendChild(st);
+    }
+    const pwEl = document.getElementById('gatePw');
+    if(pwEl) pwEl.value = '';
+  }
+});
+
+/* ---- 로그아웃 버튼 ---- */
+function addLogoutButton(){
+  if(document.getElementById('gateLogout')) return;
+  const b = document.createElement('button');
+  b.id = 'gateLogout';
+  b.textContent = '🔒 로그아웃';
+  b.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9999;padding:9px 15px;'
+    + 'border:none;border-radius:8px;background:#fff;border:1px solid #ecdfe5;'
+    + 'color:#7a2e4d;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;'
+    + 'box-shadow:0 3px 10px rgba(122,46,77,.12);';
+  b.addEventListener('click', ()=>{
+    if(confirm('로그아웃할까요?')) signOut(gateAuth).then(()=>location.reload());
+  });
+  document.body.appendChild(b);
+}
+</script>
 </body>
 </html>
