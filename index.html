@@ -27,6 +27,21 @@
         .modal-name { font-size: 48px; font-weight: bold; color: #ff6b9d; margin-bottom: 20px; }
         .modal-text { font-size: 36px; color: #333; margin-bottom: 20px; line-height: 1.4; }
         .modal-time { font-size: 24px; color: #999; }
+
+        .record-modal { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .record-modal.show { display: flex; }
+        .record-box { background: white; padding: 25px; border-radius: 16px; text-align: left; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; }
+        .record-box h2 { color: #ff6b9d; font-size: 22px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .record-close { border: none; background: #eee; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; }
+        .record-controls { display: flex; gap: 8px; margin-bottom: 14px; }
+        .record-controls input, .record-controls select { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .record-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        .record-table th { text-align: left; padding: 8px 6px; border-bottom: 2px solid #eee; color: #888; font-size: 12px; }
+        .record-table td { padding: 8px 6px; border-bottom: 1px solid #f0f0f0; }
+        .record-empty { text-align: center; color: #999; padding: 20px; font-size: 14px; }
+        .record-tag { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+        .record-tag.checkin { background: #e6f7ee; color: #2fae66; }
+        .record-tag.checkout { background: #fdeceb; color: #e2574c; }
     </style>
 </head>
 <body>
@@ -57,6 +72,7 @@
         
         <div class="admin">
             <button onclick="goAdmin()">🔐 관리자</button>
+            <button onclick="openRecordModal()" style="margin-top:8px;background:#ff6b9d;">📋 출결 기록</button>
         </div>
     </div>
     
@@ -66,6 +82,27 @@
             <div class="modal-name" id="modalName"></div>
             <div class="modal-text" id="modalText"></div>
             <div class="modal-time" id="modalTime"></div>
+        </div>
+    </div>
+
+    <div class="record-modal" id="recordModal">
+        <div class="record-box">
+            <h2>
+                <span>📋 출결 기록</span>
+                <button class="record-close" onclick="closeRecordModal()">✕</button>
+            </h2>
+            <div class="record-controls">
+                <input type="date" id="recDate">
+                <select id="recMode">
+                    <option value="checkin">등원</option>
+                    <option value="checkout">하원</option>
+                </select>
+            </div>
+            <table class="record-table">
+                <thead><tr><th>이름</th><th>구분</th><th>시간</th></tr></thead>
+                <tbody id="recTable"></tbody>
+            </table>
+            <div id="recEmpty" class="record-empty" style="display:none;">기록이 없습니다</div>
         </div>
     </div>
     
@@ -197,7 +234,47 @@
         window.addEventListener('load', () => {
             loadStudents();
             updateDisplay();
+            document.getElementById('recDate').valueAsDate = new Date();
+            document.getElementById('recDate').addEventListener('change', loadRecords);
+            document.getElementById('recMode').addEventListener('change', loadRecords);
         });
+
+        function openRecordModal() {
+            document.getElementById('recordModal').classList.add('show');
+            loadRecords();
+        }
+
+        function closeRecordModal() {
+            document.getElementById('recordModal').classList.remove('show');
+        }
+
+        function loadRecords() {
+            const date = document.getElementById('recDate').value;
+            const mode = document.getElementById('recMode').value;
+
+            fetch(DB_URL + '/attendance/' + date + '.json')
+                .then(res => res.json())
+                .then(data => {
+                    const records = data || {};
+                    let rows = '';
+                    for (let key in records) {
+                        const r = records[key];
+                        if (r.type === mode) {
+                            rows += `<tr>
+                                <td><strong>${r.name}</strong></td>
+                                <td><span class="record-tag ${r.type}">${r.type === 'checkin' ? '등원' : '하원'}</span></td>
+                                <td>${r.time}</td>
+                            </tr>`;
+                        }
+                    }
+                    document.getElementById('recTable').innerHTML = rows;
+                    document.getElementById('recEmpty').style.display = rows ? 'none' : 'block';
+                })
+                .catch(() => {
+                    document.getElementById('recTable').innerHTML = '';
+                    document.getElementById('recEmpty').style.display = 'block';
+                });
+        }
     </script>
 </body>
 </html>
