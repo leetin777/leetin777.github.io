@@ -1,334 +1,362 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>학원 출석</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; }
-        body {
-            font-family: 'Noto Sans KR', 'Comic Sans MS', sans-serif;
-            background: linear-gradient(135deg, #fff5fb 0%, #f0e6ff 100%);
-            padding: 2vh 2vw; min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .page-wrap {
-            display: flex; gap: 2.5vw; width: 100%; max-width: 1400px; height: 94vh;
-            align-items: stretch; flex-wrap: wrap; justify-content: center;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>레이첼영어학원 출결</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --plum:#7a2e4d;
+  --coral:#ff6b9d;
+  --ok:#2fae66;
+  --warn:#e2574c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:linear-gradient(135deg,#fff5fb 0%,#f0e6ff 100%);
+  display:flex;align-items:center;justify-content:center;
+  padding:0;overflow:hidden;
+}
 
-        .container {
-            background: linear-gradient(135deg, #fff9fc 0%, #ffe6f0 100%);
-            padding: 2.5vh 2.5vw; border-radius: 28px; flex: 1 1 480px; max-width: 580px;
-            text-align: center; height: 100%; display: flex; flex-direction: column;
-            box-shadow: 0 8px 32px rgba(255, 107, 157, 0.15);
-        }
-        h1 { color: #ff6b9d; font-size: clamp(28px, 3.2vw, 42px); margin-bottom: 1vh; font-weight: 900; letter-spacing: 1px; }
-        
-        .guide-box { background: linear-gradient(135deg, #fff0fa 0%, #ffe6f0 100%); border: 3px dashed #ffb8cf; border-radius: 20px; padding: 1.2vh 1.2vw; margin-bottom: 1.2vh; text-align: left; box-shadow: 0 4px 16px rgba(255, 107, 157, 0.1); display: flex; flex-wrap: wrap; gap: 0.8vh 0.6vw; align-items: flex-start; }
-        .guide-title { color: #ff6b9d; font-weight: 900; font-size: clamp(13px, 1.3vw, 17px); margin-bottom: 0.4vh; text-align: center; width: 100%; }
-        .guide-row { display: flex; align-items: center; gap: 8px; padding: 0.6vh 0.8vw; font-size: clamp(11px, 1.1vw, 13px); color: #555; font-weight: 600; flex: 1 1 calc(33.33% - 6px); background: rgba(255, 255, 255, 0.7); border-radius: 14px; box-shadow: 0 2px 8px rgba(255, 107, 157, 0.08); }
-        .guide-order { flex-shrink: 0; width: 1.6em; height: 1.6em; border-radius: 50%; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: #000; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: clamp(10px, 1vw, 12px); box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3); white-space: nowrap; line-height: 1; }
-        .guide-text { flex: 1; font-size: clamp(10px, 1vw, 12px); line-height: 1.2; }
-        .guide-example { color: #ff6b9d; font-weight: 900; font-size: clamp(10px, 1vw, 12px); display: block; }
+.page-wrap{
+  display:flex;gap:0.8vw;align-items:stretch;justify-content:center;
+  width:100%;height:100%;padding:1.2vh 1vw;
+}
 
-        .display { background: linear-gradient(135deg, #fff5f8 0%, #ffe6f0 100%); padding: 2vh 1.2vw; font-size: clamp(28px, 3.5vw, 44px); margin: 1.2vh 0; border-radius: 20px; letter-spacing: 4px; border: 3px solid #ffb8cf; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.2); }
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vh 0.8vw; margin: 1.2vh 0; }
-        button {
-            padding: 1.8vh 0; font-size: clamp(16px, 2vw, 24px); border: none; background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
-            border-radius: 16px; cursor: pointer; font-weight: 700; transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(255, 107, 157, 0.15);
-        }
-        button:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(255, 107, 157, 0.25); }
-        button:active { transform: scale(0.95); }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8vw; margin: 1.2vh 0; }
-        .btn-submit {
-            padding: 2vh 0; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: white; border: none;
-            font-size: clamp(16px, 1.8vw, 22px); font-weight: 900; cursor: pointer; border-radius: 16px;
-            transition: all 0.2s; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
-        }
-        .btn-submit:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(255, 107, 157, 0.4); }
-        .admin { margin-top: 1.2vh; }
-        .admin button { width: 100%; padding: 1.2vh 0; background: linear-gradient(135deg, #9b8dbe, #b5a5d0); color: white; font-weight: 900; font-size: clamp(13px, 1.3vw, 16px); border-radius: 16px; box-shadow: 0 4px 12px rgba(155, 141, 190, 0.2); }
-        .admin button:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(155, 141, 190, 0.3); }
+/* ===== 좌측 : 출결 입력 ===== */
+.container{
+  background:linear-gradient(135deg,#fff9fc 0%,#ffe6f0 100%);
+  border-radius:28px;
+  padding:1.6vh 1.4vw;
+  width:min(430px,36vw);
+  box-shadow:0 8px 32px rgba(255,107,157,.15);
+  display:flex;flex-direction:column;justify-content:flex-start;
+}
 
-        .modal { display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; }
-        .modal.show { display: flex; }
-        .modal-box { background: linear-gradient(135deg, #fff9fc 0%, #ffe6f0 100%); padding: 5vh 5vw; border-radius: 28px; text-align: center; min-width: 400px; box-shadow: 0 12px 40px rgba(255, 107, 157, 0.2); }
-        .modal-icon { font-size: clamp(60px, 8vw, 100px); margin-bottom: 2vh; }
-        .modal-name { font-size: clamp(36px, 5vw, 60px); font-weight: 900; color: #ff6b9d; margin-bottom: 2vh; }
-        .modal-text { font-size: clamp(26px, 3.6vw, 44px); color: #555; margin-bottom: 2vh; line-height: 1.4; font-weight: 700; }
-        .modal-time { font-size: clamp(18px, 2vw, 28px); color: #999; }
+h1{
+  color:var(--coral);
+  font-size:clamp(24px,2.8vw,38px);
+  font-weight:900;letter-spacing:1px;text-align:center;
+  margin-bottom:0.6vh;
+}
 
-        .record-panel {
-            background: linear-gradient(135deg, #fff0f8 0%, #ffe6f0 100%);
-            padding: 2.5vh 1.8vw; border-radius: 28px; flex: 1 1 320px; max-width: 380px; text-align: left; height: 100%;
-            display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(255, 107, 157, 0.15);
-        }
-        .record-panel h2 { color: #7a4a8a; font-size: clamp(20px, 2vw, 26px); margin-bottom: 0.4vh; font-weight: 900; }
-        .record-sub { color: #6d4b7a; font-size: clamp(13px, 1.3vw, 15px); margin-bottom: 1.5vh; font-weight: 700; }
-        .record-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 0.6vh; }
-        .record-row {
-            display: flex; align-items: center; justify-content: space-between; padding: 1vh 0.8vw; border-radius: 16px;
-            background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%); font-size: clamp(13px, 1.4vw, 16px); font-weight: 700;
-            box-shadow: 0 3px 12px rgba(255, 107, 157, 0.1);
-        }
-        .record-row .rname { font-weight: 900; color: #ff6b9d; }
-        .record-row .rtime { color: #ff8fa3; font-size: clamp(11px, 1vw, 13px); font-weight: 600; }
-        .record-tag { display: inline-block; padding: 0.5vh 1.2vw; border-radius: 20px; font-size: clamp(12px, 1.2vw, 15px); font-weight: 900; margin-right: 10px; white-space: nowrap; }
-        .record-tag.checkin { background: linear-gradient(135deg, #d4f5e8, #a8e6d5); color: #1b7a5a; }
-        .record-tag.checkout { background: linear-gradient(135deg, #f5d4d4, #f0a8a8); color: #7a2020; }
-        .record-empty { text-align: center; color: #ff8fa3; padding: 5vh 10px; font-size: clamp(14px, 1.5vw, 18px); font-weight: 600; }
+/* 번호 입력 표시 — 높이 절반, 위로 붙임 */
+.display{
+  background:linear-gradient(135deg,#fff5f8 0%,#ffe6f0 100%);
+  border:3px solid #ffb8cf;
+  border-radius:14px;
+  padding:0.35vh 1vw;
+  margin:0 0 1vh;
+  min-height:clamp(38px,5vh,54px);
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(20px,2.3vw,30px);
+  font-weight:900;letter-spacing:6px;color:var(--coral);
+  box-shadow:0 4px 14px rgba(255,107,157,.18);
+}
+.display .ph{color:#ffc2d6;letter-spacing:2px;font-size:0.62em;font-weight:700;}
 
-        @media (max-width: 850px) {
-            body { align-items: flex-start; }
-            .page-wrap { flex-direction: column; align-items: center; height: auto; }
-            .container, .record-panel { flex: 1 1 auto; max-width: 600px; width: 100%; height: auto; }
-            .record-panel { max-height: 50vh; }
-        }
-    </style>
+/* 키패드 : 모든 키가 동일한 크기의 정사각형 (3열 정렬) */
+.keypad{
+  display:flex;flex-direction:column;gap:0.9vh;align-items:center;
+}
+.key-row{
+  display:flex;justify-content:center;gap:0.7vw;width:100%;
+}
+.keypad button{
+  width:min(calc((100% - 1.4vw) / 3), 12.5vh);
+  flex:0 0 auto;
+  aspect-ratio:1/1;
+  display:flex;align-items:center;justify-content:center;
+  border:none;border-radius:16px;
+  font-family:inherit;font-weight:900;
+  font-size:clamp(28px,6.5vh,56px);
+  color:var(--plum);
+  background:linear-gradient(135deg,#ffffff 0%,#fff5f8 100%);
+  box-shadow:0 4px 12px rgba(255,107,157,.15);
+  cursor:pointer;transition:transform .15s,box-shadow .15s;
+}
+.keypad button:hover{transform:translateY(-3px);box-shadow:0 8px 18px rgba(255,107,157,.28);}
+.keypad button:active{transform:scale(.95);}
+
+.keypad .key-del{
+  font-size:clamp(18px,4vh,34px);white-space:nowrap;
+}
+.keypad .key-in{
+  background:linear-gradient(135deg,#3d8bfd,#6fb1ff);
+  color:#fff;font-size:clamp(24px,5.6vh,48px);
+  box-shadow:0 6px 18px rgba(61,139,253,.38);
+}
+.keypad .key-out{
+  background:linear-gradient(135deg,#ff8c1a,#ffb056);
+  color:#fff;font-size:clamp(24px,5.6vh,48px);
+  box-shadow:0 6px 18px rgba(255,140,26,.38);
+}
+
+.admin{
+  margin-top:1vh;padding:1.1vh 0;
+  border:none;border-radius:14px;
+  background:linear-gradient(135deg,#9b8dbe,#b5a5d0);
+  color:#fff;font-family:inherit;font-weight:700;
+  font-size:clamp(13px,1.3vw,17px);cursor:pointer;
+  transition:transform .15s;
+}
+.admin:hover{transform:translateY(-2px);}
+
+/* ===== 우측 : 출결 기록 ===== */
+.record-panel{
+  background:linear-gradient(135deg,#fff0f8 0%,#ffe6f0 100%);
+  border-radius:28px;
+  padding:2.2vh 1.6vw;
+  width:min(380px,30vw);
+  box-shadow:0 8px 32px rgba(255,107,157,.15);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.record-panel h2{
+  color:#7a4a8a;font-size:clamp(19px,1.9vw,26px);
+  font-weight:900;margin-bottom:0.3vh;
+}
+.record-sub{
+  color:#6d4b7a;font-size:clamp(12px,1.2vw,15px);
+  font-weight:700;margin-bottom:1.2vh;
+}
+.record-list{
+  flex:1;overflow-y:auto;
+  display:flex;flex-direction:column;gap:0.6vh;
+  padding-right:4px;
+}
+.record-list::-webkit-scrollbar{width:6px;}
+.record-list::-webkit-scrollbar-thumb{background:#ffb8cf;border-radius:10px;}
+.record-row{
+  display:flex;align-items:center;gap:0.6vw;
+  background:linear-gradient(135deg,#ffffff 0%,#fff5f8 100%);
+  padding:0.9vh 0.8vw;border-radius:16px;
+  box-shadow:0 3px 12px rgba(255,107,157,.1);
+}
+.record-tag{
+  padding:0.4vh 1vw;border-radius:20px;
+  font-size:clamp(11px,1.1vw,14px);font-weight:900;flex-shrink:0;
+}
+.tag-in{background:linear-gradient(135deg,#d4f5e8,#a8e6d5);color:#1e8f57;}
+.tag-out{background:linear-gradient(135deg,#f5d4d4,#f0a8a8);color:#c1403a;}
+.record-name{flex:1;font-weight:900;color:var(--coral);font-size:clamp(13px,1.3vw,17px);}
+.record-time{color:#ff8fa3;font-weight:700;font-size:clamp(11px,1.1vw,14px);}
+.record-empty{
+  color:#ff8fa3;text-align:center;padding:5vh 10px;
+  font-size:clamp(13px,1.4vw,18px);font-weight:700;
+}
+
+/* ===== 알림 모달 ===== */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);
+  display:none;align-items:center;justify-content:center;z-index:99;
+}
+.modal.show{display:flex;}
+.modal-box{
+  background:#fff;border-radius:24px;padding:4vh 3vw;
+  min-width:400px;text-align:center;
+  font-size:clamp(18px,2vw,26px);font-weight:900;color:var(--plum);
+  box-shadow:0 12px 40px rgba(0,0,0,.2);
+}
+
+/* ===== 반응형 ===== */
+@media (max-width:850px){
+  body{align-items:flex-start;overflow:auto;}
+  .page-wrap{flex-direction:column;height:auto;}
+  .container,.record-panel{width:100%;max-width:600px;margin:0 auto;}
+  .record-panel{max-height:50vh;}
+  .modal-box{min-width:280px;}
+}
+</style>
 </head>
 <body>
-    <div class="page-wrap">
-        <div class="container">
-            <h1>📚 레이첼영어학원</h1>
 
-            <div class="guide-box">
-                <div class="guide-title">🔑 출결코드는 이렇게 확인해요</div>
-                <div class="guide-row">
-                    <span class="guide-order">첫째</span>
-                    <span class="guide-text">부모님 휴대폰 뒷 4자리 + <strong>1</strong> &nbsp;
-                        <span class="guide-example">예) 2339 → 23391</span>
-                    </span>
-                </div>
-                <div class="guide-row">
-                    <span class="guide-order">둘째</span>
-                    <span class="guide-text">부모님 휴대폰 뒷 4자리 + <strong>2</strong> &nbsp;
-                        <span class="guide-example">예) 2339 → 23392</span>
-                    </span>
-                </div>
-                <div class="guide-row">
-                    <span class="guide-order">셋째</span>
-                    <span class="guide-text">부모님 휴대폰 뒷 4자리 + <strong>3</strong> &nbsp;
-                        <span class="guide-example">예) 2339 → 23393</span>
-                    </span>
-                </div>
-            </div>
+<div class="page-wrap">
+  <!-- 좌측: 출결 입력 -->
+  <div class="container">
+    <h1>📚 레이첼영어학원</h1>
 
-            <div class="display" id="display">•••••</div>
+    <div class="display" id="display"><span class="ph">출결번호 5자리</span></div>
 
-            <div class="keypad">
-                <button onclick="addNum('1')">1</button>
-                <button onclick="addNum('2')">2</button>
-                <button onclick="addNum('3')">3</button>
-                <button onclick="addNum('4')">4</button>
-                <button onclick="addNum('5')">5</button>
-                <button onclick="addNum('6')">6</button>
-                <button onclick="addNum('7')">7</button>
-                <button onclick="addNum('8')">8</button>
-                <button onclick="addNum('9')">9</button>
-                <button onclick="addNum('0')">0</button>
-                <button onclick="clearNum()">지우기</button>
-            </div>
-
-            <div class="actions">
-                <button class="btn-submit" onclick="checkIn()">등원</button>
-                <button class="btn-submit" onclick="checkOut()" style="background: linear-gradient(135deg, #9b8dbe, #b5a5d0);">하원</button>
-            </div>
-
-            <div class="admin">
-                <button onclick="goAdmin()">🔐 관리자</button>
-            </div>
-        </div>
-
-        <div class="record-panel">
-            <h2>📋 오늘의 출결</h2>
-            <div class="record-sub" id="recordDate"></div>
-            <div class="record-list" id="recordList">
-                <div class="record-empty">불러오는 중...</div>
-            </div>
-        </div>
+    <div class="keypad">
+      <div class="key-row">
+        <button onclick="press('1')">1</button>
+        <button onclick="press('2')">2</button>
+        <button onclick="press('3')">3</button>
+      </div>
+      <div class="key-row">
+        <button onclick="press('4')">4</button>
+        <button onclick="press('5')">5</button>
+        <button onclick="press('6')">6</button>
+      </div>
+      <div class="key-row">
+        <button onclick="press('7')">7</button>
+        <button onclick="press('8')">8</button>
+        <button onclick="press('9')">9</button>
+      </div>
+      <div class="key-row">
+        <button class="key-in" onclick="submit('checkin')">등원</button>
+        <button onclick="press('0')">0</button>
+        <button class="key-out" onclick="submit('checkout')">하원</button>
+      </div>
+      <div class="key-row">
+        <button class="key-del" onclick="del()">지우기</button>
+      </div>
     </div>
 
-    <div class="modal" id="modal">
-        <div class="modal-box">
-            <div class="modal-icon">✅</div>
-            <div class="modal-name" id="modalName"></div>
-            <div class="modal-text" id="modalText"></div>
-            <div class="modal-time" id="modalTime"></div>
-        </div>
+    <button class="admin" onclick="goAdmin()">🔐 관리자</button>
+  </div>
+
+  <!-- 우측: 출결 기록 -->
+  <div class="record-panel">
+    <h2>📋 오늘의 출결</h2>
+    <div class="record-sub" id="recordDate"></div>
+    <div class="record-list" id="recordList">
+      <div class="record-empty">불러오는 중…</div>
     </div>
+  </div>
+</div>
 
-    <script>
-        const DB_URL = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
-        let num = '';
-        let students = [];
+<div class="modal" id="modal"><div class="modal-box" id="modalText"></div></div>
 
-        function goAdmin() {
-            const pass = prompt('관리자 비번을 입력하세요:');
-            if (pass === '1234') {
-                window.location.href = '/admin/';
-            } else if (pass !== null) {
-                alert('비번이 틀렸습니다');
-            }
-        }
+<script>
+const DB = 'https://academy-8829d-default-rtdb.asia-southeast1.firebasedatabase.app';
+let pin = '';
+let students = null;
 
-        function loadStudents() {
-            fetch(DB_URL + '/students.json')
-                .then(res => res.json())
-                .then(data => {
-                    if (data) {
-                        students = Object.entries(data).map(([key, val]) => ({id: key, ...val}));
-                    }
-                })
-                .catch(err => console.log('로드 실패:', err));
-        }
+/* ---------- 입력 ---------- */
+function render(){
+  const el = document.getElementById('display');
+  el.innerHTML = pin ? '●'.repeat(pin.length) : '<span class="ph">출결번호 5자리</span>';
+}
+function press(n){ if(pin.length < 5){ pin += n; render(); } }
+function del(){ pin = pin.slice(0,-1); render(); }
+function clearPin(){ pin = ''; render(); }
 
-        function addNum(n) {
-            if (num.length < 5) {
-                num += n;
-                updateDisplay();
-            }
-        }
+/* ---------- 날짜 / 시간 ---------- */
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function nowTime(){
+  return new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+}
+function timeToMin(t){
+  const m = String(t||'').match(/(오전|오후)?\s*(\d{1,2}):(\d{2})/);
+  if(!m) return -1;
+  let h = Number(m[2]) % 12;
+  if(m[1] === '오후') h += 12;
+  return h*60 + Number(m[3]);
+}
 
-        function clearNum() {
-            num = num.slice(0, -1);
-            updateDisplay();
-        }
+/* ---------- 모달 ---------- */
+function showModal(text, ms){
+  const m = document.getElementById('modal');
+  document.getElementById('modalText').textContent = text;
+  m.classList.add('show');
+  setTimeout(()=>m.classList.remove('show'), ms || 500);
+}
 
-        function updateDisplay() {
-            const masked = num.padEnd(5, '•');
-            document.getElementById('display').textContent = masked.split('').join(' ');
-        }
+/* ---------- 학생 조회 ---------- */
+async function loadStudents(force){
+  if(students && !force) return students;
+  const res = await fetch(DB + '/students.json');
+  students = (await res.json()) || {};
+  return students;
+}
+function findByPin(list, code){
+  for(const id in list){
+    const s = list[id] || {};
+    if(String(s.pin || '').trim() === code) return {id:id, ...s};
+  }
+  return null;
+}
 
-        function showModal(name, text, time) {
-            document.getElementById('modalName').textContent = name;
-            document.getElementById('modalText').textContent = text;
-            document.getElementById('modalTime').textContent = time;
-            document.getElementById('modal').classList.add('show');
+/* ---------- 출결 등록 ---------- */
+async function submit(type){
+  if(pin.length !== 5){ showModal('❗ 번호 5자리를 입력해 주세요', 1000); return; }
+  const code = pin;
+  try{
+    let list = await loadStudents();
+    let stu = findByPin(list, code);
+    if(!stu){ list = await loadStudents(true); stu = findByPin(list, code); }
+    if(!stu){ showModal('❌ 등록되지 않은 번호입니다', 1000); clearPin(); return; }
 
-            setTimeout(() => {
-                document.getElementById('modal').classList.remove('show');
-                num = '';
-                updateDisplay();
-            }, 500);
-        }
+    await fetch(DB + '/attendance/' + todayKey() + '.json', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name: stu.name,
+        sid: stu.id,
+        type: type,
+        time: nowTime(),
+        ts: Date.now()
+      })
+    });
 
-        function checkIn() {
-            if (num.length !== 5) {
-                alert('5자리 번호를 입력하세요');
-                return;
-            }
+    showModal(type === 'checkin'
+      ? '✅ ' + stu.name + '님이 등원하였습니다'
+      : '🚪 ' + stu.name + '님이 하원하였습니다', 500);
+    clearPin();
+    loadRecords();
+  }catch(e){
+    showModal('⚠️ 연결에 실패했습니다. 다시 시도해 주세요', 1200);
+    clearPin();
+  }
+}
 
-            loadStudents();
-            setTimeout(() => {
-                const student = students.find(s => s.pin === num);
+/* ---------- 기록 목록 ---------- */
+async function loadRecords(){
+  const box = document.getElementById('recordList');
+  try{
+    const res = await fetch(DB + '/attendance/' + todayKey() + '.json');
+    const data = (await res.json()) || {};
+    const rows = Object.keys(data).map(k=>data[k]).filter(Boolean);
+    rows.sort((a,b)=>((b.ts||0)-(a.ts||0)) || (timeToMin(b.time)-timeToMin(a.time)));
 
-                if (!student) {
-                    alert('등록되지 않은 번호입니다');
-                    num = '';
-                    updateDisplay();
-                    return;
-                }
+    if(!rows.length){
+      box.innerHTML = '<div class="record-empty">오늘 기록이 아직 없습니다</div>';
+      return;
+    }
+    box.innerHTML = rows.map(r=>{
+      const isIn = r.type === 'checkin';
+      return '<div class="record-row">'
+        + '<span class="record-tag ' + (isIn?'tag-in':'tag-out') + '">' + (isIn?'등원':'하원') + '</span>'
+        + '<span class="record-name">' + (r.name||'') + '</span>'
+        + '<span class="record-time">' + (r.time||'') + '</span>'
+        + '</div>';
+    }).join('');
+  }catch(e){
+    box.innerHTML = '<div class="record-empty">기록을 불러오지 못했습니다</div>';
+  }
+}
 
-                const today = new Date().toISOString().split('T')[0];
-                const time = new Date().toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+/* ---------- 관리자 ---------- */
+function goAdmin(){
+  const p = prompt('관리자 비밀번호를 입력하세요');
+  if(p === null) return;
+  if(p === '1234') location.href = '/admin/';
+  else showModal('❌ 비밀번호가 올바르지 않습니다', 900);
+}
 
-                fetch(DB_URL + '/attendance/' + today + '.json', {
-                    method: 'POST',
-                    body: JSON.stringify({name: student.name, type: 'checkin', time})
-                })
-                .then(() => {
-                    showModal(student.name, '님이 등원하였습니다', time);
-                    loadRecords();
-                })
-                .catch(err => {
-                    alert('저장 실패: ' + err);
-                    num = '';
-                    updateDisplay();
-                });
-            }, 300);
-        }
+/* ---------- 키보드 입력 ---------- */
+document.addEventListener('keydown', e=>{
+  if(e.key >= '0' && e.key <= '9') press(e.key);
+  else if(e.key === 'Backspace') del();
+  else if(e.key === 'Enter') submit('checkin');
+});
 
-        function checkOut() {
-            if (num.length !== 5) {
-                alert('5자리 번호를 입력하세요');
-                return;
-            }
-
-            loadStudents();
-            setTimeout(() => {
-                const student = students.find(s => s.pin === num);
-
-                if (!student) {
-                    alert('등록되지 않은 번호입니다');
-                    num = '';
-                    updateDisplay();
-                    return;
-                }
-
-                const today = new Date().toISOString().split('T')[0];
-                const time = new Date().toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
-
-                fetch(DB_URL + '/attendance/' + today + '.json', {
-                    method: 'POST',
-                    body: JSON.stringify({name: student.name, type: 'checkout', time})
-                })
-                .then(() => {
-                    showModal(student.name, '님이 하원하였습니다', time);
-                    loadRecords();
-                })
-                .catch(err => {
-                    alert('저장 실패: ' + err);
-                    num = '';
-                    updateDisplay();
-                });
-            }, 300);
-        }
-
-        function loadRecords() {
-            const today = new Date().toISOString().split('T')[0];
-
-            fetch(DB_URL + '/attendance/' + today + '.json')
-                .then(res => res.json())
-                .then(data => {
-                    const records = data || {};
-                    const keys = Object.keys(records);
-                    const sorted = keys.map(k => records[k]).reverse();
-
-                    if (sorted.length === 0) {
-                        document.getElementById('recordList').innerHTML = '<div class="record-empty">오늘 기록이 아직 없습니다</div>';
-                        return;
-                    }
-
-                    let html = '';
-                    sorted.forEach(r => {
-                        html += `<div class="record-row">
-                            <div>
-                                <span class="record-tag ${r.type}">${r.type === 'checkin' ? '등원' : '하원'}</span>
-                                <span class="rname">${r.name}</span>
-                            </div>
-                            <span class="rtime">${r.time}</span>
-                        </div>`;
-                    });
-                    document.getElementById('recordList').innerHTML = html;
-                })
-                .catch(() => {
-                    document.getElementById('recordList').innerHTML = '<div class="record-empty">불러오기 실패</div>';
-                });
-        }
-
-        window.addEventListener('load', () => {
-            loadStudents();
-            updateDisplay();
-            document.getElementById('recordDate').textContent = new Date().toLocaleDateString('ko-KR', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
-            loadRecords();
-            setInterval(loadRecords, 15000);
-        });
-    </script>
+/* ---------- 초기화 ---------- */
+document.getElementById('recordDate').textContent =
+  new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+render();
+loadStudents();
+loadRecords();
+setInterval(loadRecords, 15000);
+</script>
 </body>
 </html>
