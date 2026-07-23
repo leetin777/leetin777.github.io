@@ -234,6 +234,45 @@
   .db-error{background:#fdecec;border:1px solid #f5b8b8;border-radius:10px;
     padding:16px 18px;font-size:13px;line-height:1.7;color:#8a2020;}
   .db-error code{background:#fff;padding:2px 6px;border-radius:4px;font-size:12px;}
+
+  /* --- 숙제 관리 --- */
+  #hwClassList .hw-t{font-size:11px;font-weight:800;color:var(--ink-soft);
+    margin:12px 0 5px;letter-spacing:.5px;}
+  #hwClassList .hw-t:first-child{margin-top:0;}
+  .hw-c{display:flex;justify-content:space-between;align-items:center;
+    padding:8px 11px;border-radius:8px;cursor:pointer;margin-bottom:3px;
+    border:1px solid transparent;font-size:13px;}
+  .hw-c:hover{background:#f4f7ff;}
+  .hw-c.active{background:#eef3ff;border-color:#c3d4ff;color:#2a53d8;font-weight:800;}
+  .hw-c .n{font-weight:700;}
+  .hw-c .c{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .hw-c.active .c{color:#5b7fdd;}
+  .hw-sec{font-size:13px;font-weight:800;color:var(--ink-soft);
+    border-top:1px solid #eceff5;padding-top:16px;margin:22px 0 12px;}
+  .hw-item{border:1px solid #e6e9f0;border-radius:10px;padding:11px 13px;margin-bottom:9px;}
+  .hw-item .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .hw-item .dt{font-size:13px;font-weight:800;}
+  .hw-item .due{font-size:11px;color:var(--ink-soft);font-weight:700;margin-left:7px;}
+  .hw-item .body{font-size:13px;line-height:1.65;white-space:pre-wrap;color:#3a3f4b;}
+  .hw-item .acts{display:flex;gap:5px;}
+  .hw-item .acts button{background:none;border:none;cursor:pointer;font-size:11px;
+    color:var(--ink-soft);padding:3px 6px;border-radius:5px;font-weight:700;}
+  .hw-item .acts button:hover{background:#f2f5fb;color:#2a53d8;}
+  .hw-item .acts button.danger:hover{color:#e24b4a;}
+  .send-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;}
+  .send-badge.wait{background:#fff3e0;color:#9a6110;}
+  .send-badge.done{background:#e6f5ec;color:#1d6b3f;}
+  .rcpt-box{margin-top:18px;border:1px solid #e6e9f0;border-radius:10px;padding:13px 14px;background:#fafbfd;}
+  .rcpt-head{font-size:12px;font-weight:800;color:var(--ink-soft);margin-bottom:9px;}
+  .rcpt-line{font-size:13px;padding:4px 0;display:flex;justify-content:space-between;}
+  .rcpt-line .no-ph{color:#c0392b;font-weight:700;font-size:12px;}
+  .rcpt-warn{margin-top:10px;background:#fdecec;border:1px solid #f5b8b8;border-radius:8px;
+    padding:9px 11px;font-size:12px;color:#8a2020;font-weight:700;line-height:1.6;}
+  .msg-preview{margin-top:12px;background:#fffdf5;border:1px solid #f0e2b8;border-radius:8px;
+    padding:12px 13px;font-size:13px;line-height:1.7;white-space:pre-wrap;color:#5a4a1a;}
+  .send-row{display:flex;gap:8px;align-items:center;margin-top:12px;}
+  .send-row .btn{margin-top:0;}
+  .send-note{font-size:11px;color:var(--ink-soft);font-weight:600;}
   tbody tr[data-clickable]{cursor:pointer;}
 
   /* ---- 로그인 화면 ---- */
@@ -412,13 +451,42 @@
         </div>
       </div>
 
-      <!-- ---------- Homework (준비중) ---------- -->
+      <!-- ---------- Homework ---------- -->
       <div class="page" id="page-homework">
-        <div class="card">
-          <div class="soon">
-            <div class="emoji">📝</div>
-            <div class="t">숙제 관리 기능 준비 중입니다</div>
-            <div class="d">Phase 2에서 개발 예정: 숙제 내용 / 제출 기한 / 대상 학생 입력</div>
+        <div class="grid-classes">
+          <div class="card">
+            <h2>📚 반 선택</h2>
+            <div id="hwClassList"></div>
+          </div>
+
+          <div class="card">
+            <h2 id="hwPanelTitle">숙제 작성</h2>
+            <div id="hwEditor" style="display:none;">
+              <div class="row-2">
+                <div class="form-group">
+                  <label>수업 날짜</label>
+                  <input type="date" id="hw_date">
+                </div>
+                <div class="form-group">
+                  <label>제출일</label>
+                  <input type="date" id="hw_due">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>숙제 내용</label>
+                <textarea id="hw_content" rows="4"
+                  placeholder="예: 워크북 34~36쪽&#10;단어 20개 외워오기"></textarea>
+              </div>
+              <button class="btn" onclick="saveHomework()">숙제 저장</button>
+              <button class="btn ghost" id="hwCancelBtn" style="display:none;"
+                onclick="resetHwForm()">수정 취소</button>
+
+              <div id="hwRecipients"></div>
+
+              <div class="hw-sec">📋 이 반의 숙제 내역</div>
+              <div id="hwList"></div>
+            </div>
+            <div id="hwEmpty" class="empty">왼쪽에서 반을 선택해주세요</div>
           </div>
         </div>
       </div>
@@ -526,6 +594,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     document.getElementById('pageTitle').textContent = pageTitles[key];
     if (key === 'students') loadStudents();
     if (key === 'classes') loadClasses();
+    if (key === 'homework') loadHomeworkPage();
     document.getElementById('sidebar').classList.remove('open');
   });
 });
@@ -1474,6 +1543,225 @@ function assignStudent(studentKey) {
 function unassignStudent(studentKey) {
   fetch(DB_URL + '/students/' + studentKey + '/className.json', { method: 'DELETE' })
     .then(() => loadClasses());
+}
+
+
+/* ---------- 숙제 관리 ---------- */
+let hwSelectedClass = null;
+let hwEditingKey = null;
+let hwCache = {};
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+function loadHomeworkPage() {
+  return Promise.all([
+    dbGet('/teachers'),
+    dbGet('/timeslots'),
+    dbGet('/homework'),
+    loadStudents()
+  ]).then(([teachers, slots, homework]) => {
+    teachersCache = teachers || {};
+    slotsCache = slots || {};
+    hwCache = homework || {};
+    renderHwClasses();
+    if (hwSelectedClass) selectHwClass(hwSelectedClass);
+  });
+}
+
+// 학생이 한 명이라도 있는 반만 보여준다
+function renderHwClasses() {
+  let html = '';
+  sortedTeachers().forEach(([, t]) => {
+    let inner = '';
+    sortedSlots().forEach(([, slot]) => {
+      const cn = makeClassName(t.name, slot.label);
+      const n = Object.values(studentsCache).filter(s => s.className === cn).length;
+      if (!n) return;
+      inner += hwClassRow(cn, slotRange(slot.label, slot.span), n);
+    });
+    const midCn = makeClassName(t.name, MID_LABEL);
+    const midN = Object.values(studentsCache).filter(s => s.className === midCn).length;
+    if (midN) inner += hwClassRow(midCn, '중학생반', midN);
+
+    if (inner) html += `<div class="hw-t">${t.name}</div>` + inner;
+  });
+
+  document.getElementById('hwClassList').innerHTML =
+    html || '<div class="empty">학생이 배정된 반이 없습니다.<br>클래스 관리에서 먼저 배정해주세요.</div>';
+}
+
+function hwClassRow(cn, label, n) {
+  return `<div class="hw-c ${cn === hwSelectedClass ? 'active' : ''}"
+    onclick="selectHwClass('${cn}')">
+    <span class="n">${label}</span><span class="c">${n}명</span>
+  </div>`;
+}
+
+function selectHwClass(cn) {
+  hwSelectedClass = cn;
+  renderHwClasses();
+  document.getElementById('hwEmpty').style.display = 'none';
+  document.getElementById('hwEditor').style.display = 'block';
+  document.getElementById('hwPanelTitle').textContent = cn + ' 숙제';
+  resetHwForm();
+  renderRecipients();
+  renderHwList();
+}
+
+function resetHwForm() {
+  hwEditingKey = null;
+  document.getElementById('hw_date').value = todayStr();
+  document.getElementById('hw_due').value = '';
+  document.getElementById('hw_content').value = '';
+  document.getElementById('hwCancelBtn').style.display = 'none';
+}
+
+/* --- 발송 대상 미리보기 --- */
+function classMembers(cn) {
+  return Object.entries(studentsCache)
+    .filter(([, s]) => s.className === cn)
+    .sort((a, b) => (a[1].name || '').localeCompare(b[1].name || '', 'ko'));
+}
+
+function renderRecipients() {
+  const members = classMembers(hwSelectedClass);
+  const missing = members.filter(([, s]) => !s.phone);
+
+  let lines = '';
+  members.forEach(([, s]) => {
+    lines += `<div class="rcpt-line">
+      <span>${s.name} <span style="color:var(--ink-soft);font-size:11px;">${s.pname || ''}</span></span>
+      ${s.phone
+        ? `<span style="color:var(--ink-soft);">${s.phone}</span>`
+        : '<span class="no-ph">전화번호 없음</span>'}
+    </div>`;
+  });
+
+  const warn = missing.length
+    ? `<div class="rcpt-warn">학부모 전화번호가 없는 학생이 ${missing.length}명 있습니다.
+       이 학생들은 알림톡을 못 받습니다. 학생 관리에서 번호를 넣어주세요.</div>`
+    : '';
+
+  document.getElementById('hwRecipients').innerHTML = `
+    <div class="rcpt-box">
+      <div class="rcpt-head">발송 대상 ${members.length}명 중 ${members.length - missing.length}명 발송 가능</div>
+      ${lines}
+      ${warn}
+    </div>`;
+}
+
+/* --- 저장 / 수정 / 삭제 --- */
+function saveHomework() {
+  const date = document.getElementById('hw_date').value;
+  const due = document.getElementById('hw_due').value;
+  const content = document.getElementById('hw_content').value.trim();
+
+  if (!hwSelectedClass) { alert('반을 먼저 선택해주세요'); return; }
+  if (!date) { alert('수업 날짜를 입력해주세요'); return; }
+  if (!content) { alert('숙제 내용을 입력해주세요'); return; }
+
+  const teacher = hwSelectedClass.split(' ').slice(0, -1).join(' ');
+  const payload = { className: hwSelectedClass, teacher, date, due, content };
+
+  const req = hwEditingKey
+    ? fetch(DB_URL + '/homework/' + hwEditingKey + '.json',
+        { method: 'PATCH', body: JSON.stringify(payload) })
+    : fetch(DB_URL + '/homework.json',
+        { method: 'POST', body: JSON.stringify(
+            Object.assign({}, payload, { createdAt: Date.now(), sent: false })) });
+
+  req.then(() => loadHomeworkPage()).then(() => resetHwForm());
+}
+
+function editHomework(key) {
+  const h = hwCache[key];
+  if (!h) return;
+  hwEditingKey = key;
+  document.getElementById('hw_date').value = h.date || todayStr();
+  document.getElementById('hw_due').value = h.due || '';
+  document.getElementById('hw_content').value = h.content || '';
+  document.getElementById('hwCancelBtn').style.display = 'inline-block';
+  document.getElementById('hw_content').focus();
+}
+
+function deleteHomework(key) {
+  const h = hwCache[key];
+  if (!h) return;
+  if (h.sent && !confirm('이미 발송된 숙제입니다. 그래도 삭제할까요?')) return;
+  if (!h.sent && !confirm('이 숙제를 삭제하시겠습니까?')) return;
+  fetch(DB_URL + '/homework/' + key + '.json', { method: 'DELETE' })
+    .then(() => loadHomeworkPage());
+}
+
+/* --- 숙제 내역 --- */
+function renderHwList() {
+  const items = Object.entries(hwCache)
+    .filter(([, h]) => h.className === hwSelectedClass)
+    .sort((a, b) => (b[1].date || '').localeCompare(a[1].date || ''));
+
+  let html = '';
+  items.forEach(([key, h]) => {
+    html += `<div class="hw-item">
+      <div class="hd">
+        <span>
+          <span class="dt">${fmtDate(h.date)}</span>
+          ${h.due ? `<span class="due">제출 ${fmtDate(h.due)}</span>` : ''}
+        </span>
+        <span class="acts">
+          <span class="send-badge ${h.sent ? 'done' : 'wait'}">${h.sent ? '발송됨' : '발송 대기'}</span>
+          <button onclick="editHomework('${key}')">수정</button>
+          <button class="danger" onclick="deleteHomework('${key}')">삭제</button>
+        </span>
+      </div>
+      <div class="body">${escapeHtml(h.content || '')}</div>
+      <div class="send-row">
+        <button class="btn ghost" onclick="previewMessage('${key}')">알림톡 미리보기</button>
+        <button class="btn ghost" disabled title="알림톡 연동 후 사용할 수 있습니다"
+          style="opacity:.45;cursor:not-allowed;">발송하기</button>
+        <span class="send-note">알림톡 연동 후 활성화됩니다</span>
+      </div>
+      <div id="msg-${key}"></div>
+    </div>`;
+  });
+
+  document.getElementById('hwList').innerHTML =
+    html || '<div class="empty">아직 등록된 숙제가 없습니다</div>';
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const [, m, dd] = d.split('-');
+  return `${Number(m)}월 ${Number(dd)}일`;
+}
+
+function escapeHtml(t) {
+  return String(t).replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
+/* --- 알림톡 문구 미리보기 (심사 템플릿과 동일한 형식) --- */
+function previewMessage(key) {
+  const box = document.getElementById('msg-' + key);
+  if (box.innerHTML) { box.innerHTML = ''; return; }
+
+  const h = hwCache[key];
+  const members = classMembers(h.className);
+  const sample = members.length ? members[0][1].name : '○○';
+
+  const text =
+    '[레이첼영어학원]\n' +
+    fmtDate(h.date) + ' ' + sample + ' 학생의 숙제 안내입니다.\n\n' +
+    '▶ ' + h.content + '\n\n' +
+    (h.due ? '제출일: ' + fmtDate(h.due) : '제출일: 다음 수업');
+
+  box.innerHTML = `<div class="msg-preview">${escapeHtml(text)}</div>
+    <div class="send-note" style="margin-top:7px;display:block;">
+      학생 이름은 받는 분마다 자동으로 바뀝니다. 위는 ${sample} 학생 기준 예시입니다.
+    </div>`;
 }
 
 /* ---------- 모달 닫기 편의 기능 ---------- */
