@@ -27,19 +27,21 @@
             text-align: center; height: 100%; display: flex; flex-direction: column;
             box-shadow: 0 8px 32px rgba(255, 107, 157, 0.15);
         }
-        h1 { color: #ff6b9d; font-size: clamp(28px, 3.2vw, 42px); margin-bottom: 1vh; font-weight: 900; letter-spacing: 1px; }
+        h1 { color: #ff6b9d; font-size: clamp(26px, 3vw, 40px); margin-bottom: 0.8vh; font-weight: 900; letter-spacing: 1px; }
         
-        .guide-box { background: linear-gradient(135deg, #fff0fa 0%, #ffe6f0 100%); border: 3px dashed #ffb8cf; border-radius: 20px; padding: 1.2vh 1.2vw; margin-bottom: 1.2vh; text-align: left; box-shadow: 0 4px 16px rgba(255, 107, 157, 0.1); display: flex; flex-wrap: wrap; gap: 0.8vh 0.6vw; }
-        .guide-title { color: #ff6b9d; font-weight: 900; font-size: clamp(13px, 1.3vw, 17px); margin-bottom: 0.2vh; text-align: center; width: 100%; }
-        .guide-row { display: flex; align-items: center; gap: 8px; padding: 0.4vh 0.6vw; font-size: clamp(11px, 1.1vw, 13px); color: #555; font-weight: 600; flex: 1 1 calc(33.33% - 4px); background: rgba(255, 255, 255, 0.6); border-radius: 12px; }
-        .guide-order { flex-shrink: 0; width: 1.6em; height: 1.6em; border-radius: 50%; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: #000; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: clamp(10px, 1vw, 12px); box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3); white-space: nowrap; line-height: 1; }
-        .guide-text { flex: 1; font-size: clamp(10px, 1vw, 12px); line-height: 1.2; }
-        .guide-example { color: #ff6b9d; font-weight: 900; font-size: clamp(9px, 0.9vw, 11px); display: block; }
+        .guide-box { display: none; }
+        .guide-title { color: #ff6b9d; font-weight: 900; font-size: clamp(13px, 1.3vw, 17px); margin-bottom: 0.7vh; text-align: center; }
+        .guide-row { display: flex; align-items: center; gap: 12px; padding: 0.6vh 0; font-size: clamp(12px, 1.2vw, 15px); color: #555; font-weight: 600; }
+        .guide-order { flex-shrink: 0; width: 1.8em; height: 1.8em; border-radius: 50%; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: #000; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: clamp(11px, 1.1vw, 14px); box-shadow: 0 4px 12px rgba(255, 107, 157, 0.3); }
+        .guide-text { flex: 1; }
+        .guide-example { color: #ff6b9d; font-weight: 900; }
 
-        .display { background: linear-gradient(135deg, #fff5f8 0%, #ffe6f0 100%); padding: 2vh 1.2vw; font-size: clamp(28px, 3.5vw, 44px); margin: 1.2vh 0; border-radius: 20px; letter-spacing: 4px; border: 3px solid #ffb8cf; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.2); }
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vh 0.8vw; margin: 1.2vh 0; }
+        .display { background: linear-gradient(135deg, #fff5f8 0%, #ffe6f0 100%); padding: 1.2vh 1.2vw; font-size: clamp(24px, 3vw, 38px); margin: 0.8vh 0; border-radius: 20px; letter-spacing: 4px; border: 3px solid #ffb8cf; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.2); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vh 0.8vw; margin: 0.8vh 0; }
+        .keypad button:nth-child(10) { grid-column: 1; }
+        .keypad button:nth-child(11) { grid-column: 2 / 4; }
         button {
-            aspect-ratio: 1 / 1; font-size: clamp(16px, 2vw, 24px); border: none; background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
+            aspect-ratio: 1 / 1; font-size: clamp(18px, 2.4vw, 28px); border: none; background: linear-gradient(135deg, #ffffff 0%, #fff5f8 100%);
             border-radius: 16px; cursor: pointer; font-weight: 700; transition: all 0.2s;
             box-shadow: 0 4px 12px rgba(255, 107, 157, 0.15); display: flex; align-items: center; justify-content: center;
         }
@@ -47,12 +49,12 @@
         button:active { transform: scale(0.95); }
         .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8vw; margin: 1.2vh 0; }
         .btn-submit {
-            padding: 2vh 0; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: white; border: none;
+            padding: 1.5vh 0; background: linear-gradient(135deg, #ff6b9d, #ff8fab); color: white; border: none;
             font-size: clamp(16px, 1.8vw, 22px); font-weight: 900; cursor: pointer; border-radius: 16px;
             transition: all 0.2s; box-shadow: 0 6px 20px rgba(255, 107, 157, 0.3);
         }
         .btn-submit:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(255, 107, 157, 0.4); }
-        .admin { margin-top: 1.2vh; }
+        .admin { margin-top: 0.8vh; }
         .admin button { width: 100%; padding: 1.2vh 0; background: linear-gradient(135deg, #9b8dbe, #b5a5d0); color: white; font-weight: 900; font-size: clamp(13px, 1.3vw, 16px); border-radius: 16px; box-shadow: 0 4px 12px rgba(155, 141, 190, 0.2); }
         .admin button:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(155, 141, 190, 0.3); }
 
