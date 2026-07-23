@@ -146,6 +146,31 @@
   .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-soft);}
   .modal-actions{display:flex;gap:8px;margin-top:6px;}
   .modal-actions .btn{margin-top:0;}
+
+  /* --- 클릭 가능한 학생 행 --- */
+  tr.clickable{cursor:pointer;transition:background .12s;}
+  tr.clickable:hover{background:#f4f7ff;}
+  tr.clickable td:first-child strong{color:#3d6bfd;}
+
+  /* --- 학생 정보 보기 모달 --- */
+  .info-grid{display:grid;grid-template-columns:92px 1fr;gap:9px 14px;font-size:14px;margin-bottom:18px;}
+  .info-grid dt{color:var(--ink-soft);font-weight:600;}
+  .info-grid dd{margin:0;font-weight:700;word-break:break-all;}
+  .info-grid dd.muted{color:#aab;font-weight:500;}
+  .info-pin{font-family:ui-monospace,Menlo,monospace;font-size:17px;letter-spacing:2px;
+    background:#eef3ff;color:#2a53d8;padding:3px 10px;border-radius:7px;display:inline-block;}
+  .info-sec{font-size:13px;font-weight:800;color:var(--ink-soft);
+    border-top:1px solid #eceff5;padding-top:14px;margin-bottom:10px;}
+  .att-list{max-height:210px;overflow-y:auto;margin-bottom:16px;}
+  .att-row{display:flex;justify-content:space-between;align-items:center;
+    padding:8px 2px;border-bottom:1px solid #f2f4f8;font-size:13px;}
+  .att-row:last-child{border-bottom:none;}
+  .att-date{font-weight:700;}
+  .att-time{color:var(--ink-soft);font-size:12px;margin-left:8px;font-weight:500;}
+  .att-badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;color:#fff;}
+  .att-badge.in{background:#3d8bfd;}
+  .att-badge.out{background:#ff8c1a;}
+  .att-loading{color:var(--ink-soft);font-size:13px;padding:14px 0;text-align:center;}
   tbody tr[data-clickable]{cursor:pointer;}
 
   /* ---- 로그인 화면 ---- */
@@ -311,7 +336,9 @@
           </div>
 
           <div class="card">
-            <h2 id="classPanelTitle">👥 학생을 클래스에 배정</h2>
+            <h2 id="classPanelTitle">👥 학생을 클래스에 배정
+              <span style="font-size:12px;font-weight:600;color:var(--ink-soft);margin-left:8px;">학생 이름을 누르면 정보가 열립니다</span>
+            </h2>
             <table>
               <thead><tr><th>이름</th><th>학교</th><th>학년</th><th>현재 클래스</th><th style="width:180px;">배정</th></tr></thead>
               <tbody id="classAssignTable"></tbody>
@@ -348,6 +375,35 @@
 </div>
 
 <!-- ===== Student Detail Modal ===== -->
+<!-- ===== 학생 정보 보기 ===== -->
+<div class="modal-overlay" id="studentInfoModal">
+  <div class="modal-box">
+    <h2>
+      <span id="i_title">학생 정보</span>
+      <button class="modal-close" onclick="closeStudentInfo()">✕</button>
+    </h2>
+
+    <dl class="info-grid">
+      <dt>학교</dt><dd id="i_school">-</dd>
+      <dt>학년</dt><dd id="i_grade">-</dd>
+      <dt>클래스</dt><dd id="i_class">-</dd>
+      <dt>출결코드</dt><dd><span class="info-pin" id="i_pin">-</span></dd>
+      <dt>부모 이름</dt><dd id="i_pname">-</dd>
+      <dt>부모 전화</dt><dd id="i_phone">-</dd>
+    </dl>
+
+    <div class="info-sec">📅 최근 출결 (2주)</div>
+    <div class="att-list" id="i_attendance">
+      <div class="att-loading">불러오는 중...</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn" onclick="editFromInfo()">정보 수정</button>
+      <button class="btn ghost" onclick="closeStudentInfo()">닫기</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="studentModal">
   <div class="modal-box">
     <h2>
@@ -515,6 +571,95 @@ async function regeneratePinsFromPhone() {
 
   alert(`${updates.length}명의 출결코드를 재생성했습니다`);
   loadStudents();
+}
+
+/* ---------- 학생 정보 보기 모달 ---------- */
+let currentInfoKey = null;
+
+function openStudentInfo(key) {
+  const s = studentsCache[key];
+  if (!s) return;
+  currentInfoKey = key;
+
+  const $ = id => document.getElementById(id);
+  $('i_title').textContent = (s.name || '이름 없음') + ' 학생';
+  $('i_school').textContent = s.school || '-';
+  $('i_grade').textContent  = s.grade  || '-';
+  $('i_pin').textContent    = s.pin    || '-';
+  $('i_pname').textContent  = s.pname  || '-';
+
+  $('i_class').innerHTML = s.className
+    ? `<span class="tag class">${s.className}</span>`
+    : '<span class="muted">미배정</span>';
+
+  // 전화번호는 눌러서 바로 걸 수 있게
+  $('i_phone').innerHTML = s.phone
+    ? `<a href="tel:${s.phone.replace(/[^0-9]/g,'')}" style="color:#3d6bfd;">${s.phone}</a>`
+    : '<span class="muted">등록 안 됨</span>';
+
+  $('i_attendance').innerHTML = '<div class="att-loading">불러오는 중...</div>';
+  document.getElementById('studentInfoModal').classList.add('open');
+
+  loadRecentAttendance(key);
+}
+
+function closeStudentInfo() {
+  document.getElementById('studentInfoModal').classList.remove('open');
+  currentInfoKey = null;
+}
+
+// 정보 보기 → 수정 화면으로
+function editFromInfo() {
+  const key = currentInfoKey;
+  closeStudentInfo();
+  if (key) openStudentModal(key);
+}
+
+// 최근 14일치 날짜만 조회 (전체 출결을 다 받지 않도록)
+function loadRecentAttendance(studentKey) {
+  const dates = [];
+  const today = new Date();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    dates.push(d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0'));
+  }
+
+  Promise.all(
+    dates.map(date =>
+      fetch(DB_URL + '/attendance/' + date + '.json')
+        .then(r => r.json())
+        .then(data => ({ date, data: data || {} }))
+        .catch(() => ({ date, data: {} }))
+    )
+  ).then(results => {
+    // 모달이 이미 닫혔거나 다른 학생으로 바뀌었으면 무시
+    if (currentInfoKey !== studentKey) return;
+
+    let html = '';
+    results.forEach(({ date, data }) => {
+      const recs = Object.values(data)
+        .filter(r => r.sid === studentKey)
+        .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      if (!recs.length) return;
+
+      const [, mm, dd] = date.split('-');
+      const label = `${Number(mm)}월 ${Number(dd)}일`;
+
+      recs.forEach(r => {
+        const isIn = r.type === 'checkin';
+        html += `<div class="att-row">
+          <span><span class="att-date">${label}</span><span class="att-time">${r.time || ''}</span></span>
+          <span class="att-badge ${isIn ? 'in' : 'out'}">${isIn ? '등원' : '하원'}</span>
+        </div>`;
+      });
+    });
+
+    document.getElementById('i_attendance').innerHTML =
+      html || '<div class="att-loading">최근 2주간 출결 기록이 없습니다</div>';
+  });
 }
 
 /* ---------- Student detail modal ---------- */
@@ -884,18 +1029,26 @@ function loadClasses() {
       let selectHtml = optionsHtml.replace(
         `value="${s.className}"`, `value="${s.className}" selected`
       );
-      rows += `<tr>
+      rows += `<tr class="clickable" onclick="if(!event.target.closest('select'))openStudentInfo('${sKey}')">
         <td><strong>${s.name}</strong></td>
         <td>${s.school || '-'}</td>
         <td>${s.grade || '-'}</td>
         <td>${s.className ? `<span class="tag class">${s.className}</span>` : '-'}</td>
-        <td><select onchange="assignClass('${sKey}', this.value)">${selectHtml}</select></td>
+        <td onclick="event.stopPropagation()"><select onchange="assignClass('${sKey}', this.value)">${selectHtml}</select></td>
       </tr>`;
     }
     document.getElementById('classAssignTable').innerHTML = rows;
     document.getElementById('classAssignEmpty').style.display = rows ? 'none' : 'block';
   });
 }
+
+/* ---------- 모달 닫기 편의 기능 ---------- */
+document.getElementById('studentInfoModal').addEventListener('click', function(e){
+  if (e.target === this) closeStudentInfo();
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeStudentInfo();
+});
 
 /* ---------- Init ---------- */
 document.getElementById('todayDate').textContent =
