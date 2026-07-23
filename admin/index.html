@@ -273,6 +273,16 @@
   .send-row{display:flex;gap:8px;align-items:center;margin-top:12px;}
   .send-row .btn{margin-top:0;}
   .send-note{font-size:11px;color:var(--ink-soft);font-weight:600;}
+  .role-badge{font-size:11px;font-weight:800;padding:4px 11px;border-radius:20px;white-space:nowrap;}
+  .role-badge.admin{background:#eef3ff;color:#2a53d8;}
+  .role-badge.teacher{background:#ede4ff;color:#5b3fa8;}
+  .retain-box{margin-top:18px;padding-top:15px;border-top:1px solid #eceff5;}
+  .retain-row{display:flex;align-items:center;gap:7px;font-size:12px;
+    font-weight:700;color:var(--ink-soft);flex-wrap:wrap;}
+  .retain-row input{width:62px;margin:0;height:31px;font-size:12px;padding:5px 8px;}
+  .retain-row .btn{margin-top:0;padding:6px 11px;font-size:12px;}
+  .retain-note{font-size:11px;color:#aab;margin-top:8px;line-height:1.6;}
+  .retain-note.done{color:#1d6b3f;font-weight:700;}
 
   /* --- 보낼 학생 고르기 --- */
   .tg-box{border:1px solid #e6e9f0;border-radius:10px;background:#fafbfd;
@@ -362,7 +372,10 @@
         <button class="menu-toggle" id="menuToggle">☰</button>
         <h1 id="pageTitle">학생 관리</h1>
       </div>
-      <div class="date" id="todayDate"></div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="role-badge admin" id="roleBadge">원장</span>
+        <div class="date" id="todayDate"></div>
+      </div>
     </div>
 
     <div class="content">
@@ -479,6 +492,17 @@
           <div class="card">
             <h2>📚 반 선택</h2>
             <div id="hwClassList"></div>
+            <div id="hwRetainBox" class="retain-box" style="display:none;">
+              <div class="retain-row">
+                <span>숙제 기록 보관</span>
+                <input type="number" id="hw_retain" min="7" max="365" value="30">
+                <span>일</span>
+                <button class="btn ghost" onclick="saveRetention()">저장</button>
+              </div>
+              <div class="retain-note" id="hwRetainNote">
+                기간이 지난 숙제는 관리자가 이 화면을 열 때 자동으로 지워집니다.
+              </div>
+            </div>
           </div>
 
           <div class="card">
@@ -1569,7 +1593,90 @@ function unassignStudent(studentKey) {
 }
 
 
+
+/* ---------- 역할(원장 / 선생님) ---------- */
+let currentRole = 'admin';
+let currentTeacherId = null;   // 로그인한 선생님의 아이디 (소문자)
+
+// 로그인한 아이디와 이름이 같은 선생님을 찾는다 (대소문자 무시)
+function myTeacherName() {
+  if (currentRole === 'admin') return null;
+  const hit = Object.values(teachersCache)
+    .find(t => (t.name || '').toLowerCase() === currentTeacherId);
+  return hit ? hit.name : null;
+}
+
+window.applyRole = function(role, idPart) {
+  currentRole = role;
+  currentTeacherId = (idPart || '').toLowerCase();
+
+  const isTeacher = role === 'teacher';
+
+  // 선생님은 학생 관리 / 클래스 관리를 쓰지 않는다
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const key = item.dataset.page;
+    if (isTeacher && (key === 'students' || key === 'classes')) {
+      item.style.display = 'none';
+    }
+  });
+
+  const badge = document.getElementById('roleBadge');
+  if (badge) {
+    badge.textContent = isTeacher ? (idPart + ' 선생님') : '원장';
+    badge.className = 'role-badge ' + (isTeacher ? 'teacher' : 'admin');
+  }
+
+  if (isTeacher) {
+    // 첫 화면을 숙제 관리로
+    const hwNav = document.querySelector('.nav-item[data-page="homework"]');
+    if (hwNav) hwNav.click();
+  }
+};
+
 /* ---------- 숙제 관리 ---------- */
+/* --- 숙제 보관 기간 --- */
+const DEFAULT_RETAIN = 30;
+let hwRetainDays = DEFAULT_RETAIN;
+
+function dateNDaysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
+}
+
+function saveRetention() {
+  const v = parseInt(document.getElementById('hw_retain').value, 10);
+  if (!v || v < 7 || v > 365) { alert('보관 기간은 7일에서 365일 사이로 입력해주세요'); return; }
+  fetch(DB_URL + '/settings/hwRetainDays.json', { method: 'PUT', body: JSON.stringify(v) })
+    .then(() => {
+      hwRetainDays = v;
+      note(`보관 기간을 ${v}일로 저장했습니다.`, true);
+      return loadHomeworkPage();
+    });
+}
+
+function note(text, ok) {
+  const el = document.getElementById('hwRetainNote');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'retain-note' + (ok ? ' done' : '');
+}
+
+// 기간 지난 숙제 정리 (원장님이 화면을 열 때만)
+function cleanupOldHomework() {
+  if (currentRole !== 'admin') return Promise.resolve(0);
+  const cutoff = dateNDaysAgo(hwRetainDays);
+  const old = Object.entries(hwCache).filter(([, h]) => (h.date || '') && h.date < cutoff);
+  if (!old.length) return Promise.resolve(0);
+
+  const updates = {};
+  old.forEach(([k]) => { updates[k] = null; delete hwCache[k]; });
+  return fetch(DB_URL + '/homework.json', { method: 'PATCH', body: JSON.stringify(updates) })
+    .then(() => old.length);
+}
+
+
 let hwSelectedClass = null;
 let hwEditingKey = null;
 let hwCache = {};
@@ -1586,11 +1693,25 @@ function loadHomeworkPage() {
     dbGet('/teachers'),
     dbGet('/timeslots'),
     dbGet('/homework'),
+    dbGet('/settings/hwRetainDays'),
     loadStudents()
-  ]).then(([teachers, slots, homework]) => {
+  ]).then(([teachers, slots, homework, retain]) => {
     teachersCache = teachers || {};
     slotsCache = slots || {};
     hwCache = homework || {};
+    hwRetainDays = (typeof retain === 'number' && retain >= 7) ? retain : DEFAULT_RETAIN;
+
+    const box = document.getElementById('hwRetainBox');
+    if (box) {
+      box.style.display = currentRole === 'admin' ? 'block' : 'none';
+      document.getElementById('hw_retain').value = hwRetainDays;
+    }
+
+    return cleanupOldHomework();
+  }).then(removed => {
+    if (removed) {
+      note(`${hwRetainDays}일이 지난 숙제 ${removed}건을 정리했습니다.`, true);
+    }
     renderHwClasses();
     if (hwSelectedClass) selectHwClass(hwSelectedClass);
   });
@@ -1598,8 +1719,10 @@ function loadHomeworkPage() {
 
 // 학생이 한 명이라도 있는 반만 보여준다
 function renderHwClasses() {
+  const mine = myTeacherName();
   let html = '';
   sortedTeachers().forEach(([, t]) => {
+    if (mine && t.name !== mine) return;
     let inner = '';
     sortedSlots().forEach(([, slot]) => {
       const cn = makeClassName(t.name, slot.label);
@@ -1614,8 +1737,11 @@ function renderHwClasses() {
     if (inner) html += `<div class="hw-t">${t.name}</div>` + inner;
   });
 
+  const emptyMsg = (currentRole === 'teacher' && !myTeacherName())
+    ? '로그인한 아이디와 같은 이름의 선생님이 클래스 관리에 없습니다.<br>원장님께 문의해주세요.'
+    : '학생이 배정된 반이 없습니다.<br>클래스 관리에서 먼저 배정해주세요.';
   document.getElementById('hwClassList').innerHTML =
-    html || '<div class="empty">학생이 배정된 반이 없습니다.<br>클래스 관리에서 먼저 배정해주세요.</div>';
+    html || '<div class="empty">' + emptyMsg + '</div>';
 }
 
 function hwClassRow(cn, label, n) {
@@ -1977,11 +2103,30 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
   if(confirm('로그아웃할까요?')) signOut(auth).then(()=>location.reload());
 });
 
-onAuthStateChanged(auth, user=>{
+onAuthStateChanged(auth, async user=>{
   currentUser = user;
   if(user){
     waiters.forEach(f=>f(user));
     waiters = [];
+
+    // 역할 확인: /roles/{uid} 에 admin 인지 teacher 인지 적혀 있음
+    let role = null;
+    try{
+      const token = await user.getIdToken();
+      const r = await nativeFetch(DB_PREFIX + '/roles/' + user.uid + '.json?auth=' + encodeURIComponent(token));
+      role = await r.json();
+    }catch(e){ console.error('역할 조회 실패', e); }
+
+    if(role !== 'admin' && role !== 'teacher'){
+      errEl.textContent = '이 계정은 아직 사용 권한이 없습니다. 원장님께 문의해주세요.';
+      await signOut(auth);
+      return;
+    }
+
+    // 아이디(이메일 앞부분)로 선생님 이름을 찾는다
+    const idPart = (user.email || '').split('@')[0];
+    window.applyRole(role, idPart);
+
     gate.style.display = 'none';
     shell.classList.remove('app-hidden');
     if(typeof window.loadStudents === 'function') window.loadStudents();
