@@ -906,7 +906,7 @@ document.getElementById('todayDate').textContent =
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
-         setPersistence, browserLocalPersistence }
+         setPersistence, browserSessionPersistence }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -966,7 +966,7 @@ async function login(){
   const email = idRaw.includes('@') ? idRaw : idRaw + ID_DOMAIN;
   errEl.textContent = '로그인 중…';
   try{
-    await setPersistence(auth, browserLocalPersistence);
+    await setPersistence(auth, browserSessionPersistence);
     await signInWithEmailAndPassword(auth, email, pw);
     errEl.textContent = '';
   }catch(e){
